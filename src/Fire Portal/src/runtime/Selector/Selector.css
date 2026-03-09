@@ -1,0 +1,79 @@
+.mainSelectorArea {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    border-radius: 10px;
+    z-index: 100;
+}
+
+.selectorBtnArea {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 400;
+    font-size: 16px;
+    text-align: justify;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    color: rgb(var(--color));
+    background-color: rgb(var(--main-bg));
+    border: 1px solid rgba(var(--active-color), 0);
+    border-radius: 10px;
+
+    transition: all 0.2s ease-in-out;
+}
+
+.selectorBtnArea:hover {
+    background-color: rgba(var(--active-color), 0.3);
+    border: 1px solid rgba(var(--active-color), 0.8);
+    color: rgb(var(--active-color));
+}
+
+.selectorOptionsArea {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: absolute;
+    top: Calc(100% + 5px);
+    width: 100%;
+    height: auto;
+    background-color: rgb(var(--main-bg));
+    padding: 5px;
+    gap: 5px;
+    border-radius: 5px;
+}
+
+.selectorOptions {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    background-color: rgb(var(--area-bg));
+    border: 1px solid rgba(var(--active-color), 0);
+    color: rgb(var(--color));
+
+    font-weight: 800;
+    font-size: 16px;
+    text-align: justify;
+}
+
+.selectorOptions.active {
+    background-color: rgba(var(--active-color), 0.3);
+    border: 1px solid rgba(var(--active-color), 0.8);
+    color: rgb(var(--active-color));
+}
+
+.selectorOptions:hover {
+    background-color: rgba(var(--active-color), 0.1);
+    border: 1px solid rgba(var(--active-color), 0.5);
+}

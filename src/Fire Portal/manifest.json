@@ -1,0 +1,13 @@
+{
+    "manifest_version": 2,
+    "name": "Fire Portal",
+    "label": "Fire Portal",
+    "type": "widget",
+    "icon": "icon.svg",
+    "description": "Fire portal",
+    "version": "1.18.0",
+    "author": "Fasihitdinov Niyoziddin",
+    "exbVersion": "1.18.0",
+    "license": "http://www.apache.org/licenses/LICENSE-2.0",
+    "dependency": [ "jimu-arcgis" ]
+}
