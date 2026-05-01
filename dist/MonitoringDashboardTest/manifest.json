@@ -12,5 +12,7 @@
   "dependency": [
     "jimu-arcgis"
   ],
-  "properties": {}
+  "properties": {
+    "hasSettingPage": false
+  }
 }

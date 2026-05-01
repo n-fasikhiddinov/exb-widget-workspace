@@ -1,10 +1,9 @@
 import { React } from "jimu-core"
 import "./CustomInput.css"
-import { useLayoutEffect } from "react"
 
 interface CustomInputProps {
     name: string
-    value: string
+    value: string | null
     onChange: (value: string) => void
 }
 
@@ -13,10 +12,12 @@ export default function CustomInput({
     value,
     onChange
 }: CustomInputProps) {
-    const [hasContent, setContent] = React.useState<Boolean>(false)
-    const nameRef = React.useRef<HTMLDivElement | null>(null);
+    const safeValue = value ?? ""
+    const [hasContent, setContent] = React.useState<Boolean>(safeValue.length > 0)
+    const nameRef = React.useRef<HTMLDivElement | null>(null)
+
     const moveText = (move: number) => {
-        if (!nameRef.current) return null
+        if (!nameRef.current) return
         const nameSymbol = Array.from(nameRef.current.children)
         nameSymbol.forEach((symbol: any, index: number) => {
             symbol.style.left = `${move}px`
@@ -26,8 +27,12 @@ export default function CustomInput({
     }
 
     React.useLayoutEffect(() => {
-        moveText(15)
+        moveText(safeValue.length > 0 ? 10 : 15)
     }, [])
+
+    React.useEffect(() => {
+        setContent(safeValue.length > 0)
+    }, [safeValue])
 
     React.useEffect(() => {
         moveText(hasContent ? 10 : 15)
@@ -35,17 +40,15 @@ export default function CustomInput({
 
     return (
         <div className="customInputArea">
-            <div className={`customInputName ${hasContent && "active"}`} ref={nameRef}>
+            <div className={`customInputName ${hasContent ? "active" : ""}`} ref={nameRef}>
                 {` ${name} `.split("").map((item: string, index: number) => <div key={index}>{item === " " ? "\u00A0" : item}</div>)}
             </div>
             <input
-                className={`customInput ${hasContent && "inputActive"}`}
-                value={value}
-                onChange={(event: any) => {
-                    onChange(event.target.value)
-                }}
+                className={`customInput ${hasContent ? "inputActive" : ""}`}
+                value={safeValue}
+                onChange={(event: any) => onChange(event.target.value)}
                 onFocus={() => setContent(true)}
-                onBlur={() => setContent(value?.length > 0 && value !== null && value !== "")}
+                onBlur={() => setContent(safeValue.length > 0)}
             />
         </div>
     )

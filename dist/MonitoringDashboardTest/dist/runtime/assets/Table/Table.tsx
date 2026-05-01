@@ -69,7 +69,7 @@ export default function Table({ data, fields, getFilter, setFilter }: TableProps
                                     <div className={`thInner align-${align}`}>
                                         <span className="thText">{f.name || f.field}</span>
                                         {isSorted ? (
-                                            <span className="sortIcon">{getFilter.order === "asc" ? "▼" : "▲"}</span>
+                                            <span className="sortIcon">{getFilter.order === "asc" ? "▲" : "▼"}</span>
                                         ) : null}
                                     </div>
                                 </th>
