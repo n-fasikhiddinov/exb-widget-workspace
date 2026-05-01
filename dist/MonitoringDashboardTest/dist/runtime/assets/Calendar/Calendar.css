@@ -1,0 +1,272 @@
+/* =================== Calendar.css =================== */
+
+/* Основной контейнер (обёртка вокруг инпута и попапа) */
+.calendarInputArea {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Сам инпут (теперь выглядит как обычный FilterInput) */
+.calendarInputArea input {
+    flex: 1;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #77777780;
+    border-radius: 6px;
+    background-color: #00000000;
+    color: #000000;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.calendarInputArea input:focus {
+    border: 1px solid #2563eb;
+    /* box-shadow: 0 0 0 3px rgba(var(--hover-color), 0.2); */
+}
+
+.calendarInputArea input::placeholder {
+    color: #000000;
+}
+
+/* Текст после инпута (например, "dan" / "gacha") */
+.calendarInputArea span {
+    color: #000000;
+    font-size: 14px;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* Всплывающий календарь — теперь по центру инпута */
+.calendarPopup {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    /* Центрируем по горизонтали */
+    transform: translateX(-50%);
+    /* Сдвигаем на половину своей ширины влево */
+    width: 320px;
+    background-color: #f9fafb;
+    border: 1px solid #c9c6c6;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendarPopup.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(5px);
+    /* Сохраняем центрирование при открытии */
+}
+
+/* Навигация сверху */
+.calendarBtns {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px;
+    /* background-color: #c9c6c6; */
+}
+
+.calendarBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background-color: #e6e6e6d2;
+    color: #000000;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendarBtn:hover {
+    background-color: #cfcfcfa6;
+    transform: scale(1.05);
+}
+
+.calendarInfo {
+    flex: 1;
+    height: 36px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 5px;
+    margin-right: 5px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    background-color: #e6e6e6d2;
+}
+
+.calendarInfo:hover {
+    background-color: #cfcfcfa6;
+}
+
+/* Разделительная линия */
+.line {
+    height: 1px;
+    background-color: #2563eb;
+    margin: 0 16px;
+}
+
+/* Дни недели */
+.weeksArea {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 8px 16px 4px;
+    gap: 4px;
+}
+
+.weeks {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6a95f1;
+    opacity: 0.7;
+}
+
+/* Сетка дней */
+.daysArea {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 44px);
+    gap: 4px;
+    padding: 8px 16px 12px;
+}
+
+/* Ячейки дней */
+.days {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.days:hover:not(.disabled):not(.empty) {
+    background-color: #2564eb77;
+}
+
+/* Пустые ячейки */
+.days.empty {
+    background: transparent !important;
+    cursor: default;
+}
+
+/* Дни из других месяцев */
+.days.other-month {
+    color: #6d6d6d22
+}
+
+/* Сегодня */
+.days.today-day {
+    color: #2564eb;
+    font-weight: 600;
+    border: 1px solid #6a95f1;
+}
+
+/* Выбранный день */
+.days.selected-day {
+    background-color: #2564eb;
+    color: white;
+    font-weight: 600;
+}
+
+/* Недоступные дни */
+.days.disabled {
+    color: #6d6d6d22;
+    cursor: not-allowed;
+}
+
+/* Режим месяцев */
+.monthArea {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 50px);
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.month {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.month:hover:not(.disabled) {
+    background-color: #6a95f1bd;
+}
+
+.month.selected-month {
+    background-color: #2564eb;
+    color: white;
+    font-weight: 600;
+}
+
+.month.disabled {
+    color: #6d6d6d22;
+    cursor: not-allowed;
+}
+
+/* Режим лет */
+.yearArea {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* grid-template-rows: repeat(5, 48px); */
+    gap: 8px;
+    padding: 12px 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.year {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 35px;
+}
+
+.year:hover:not(.disabled) {
+    background-color: #6a95f1bd;
+}
+
+.year.activ {
+    background-color: #2564eb;
+    color: white;
+    font-weight: 600;
+}
+
+.year.disabled {
+    color: #6d6d6d22;
+    cursor: not-allowed;
+}

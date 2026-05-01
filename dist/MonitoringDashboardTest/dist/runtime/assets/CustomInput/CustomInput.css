@@ -1,0 +1,60 @@
+.customInputArea {
+    width: 100%;
+    height: 100%;
+    /* background-color: aqua; */
+    position: relative;
+}
+
+.customInputName {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    user-select: none;
+    z-index: 0;
+    padding-left: 5px;
+    transform: scale(1);
+    transform-origin: top left;
+    transition: transform 0.1s ease-in-out;
+    pointer-events: none;
+}
+
+.customInputName>div {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    background-color: #f9fafb;
+}
+
+.customInputName.active {
+    transform: scale(0.7);
+    z-index: 11;
+}
+
+.customInputName.active>div {
+    top: 0;
+    transform: translateY(-50%);
+    background-color: #f9fafb;
+}
+
+.customInput {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0%;
+    border: 1px solid #77777780;
+    border-radius: 5px;
+    background-color: #00000000;
+    font-size: 15px;
+    z-index: 10;
+    padding: 0 10px;
+}
+
+.customInput:focus,
+.inputActive {
+    border: 1px solid #2563eb;
+}
