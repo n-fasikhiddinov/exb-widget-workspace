@@ -1,6 +1,18 @@
-/*! sheetjs (C) 2013-present SheetJS -- http://sheetjs.com */
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
 
-/*! xlsx.js (C) 2013-present SheetJS -- http://sheetjs.com */
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+/*! http://mths.be/fromcodepoint v0.1.0 by @mathias */
 
 /**
  * @license React
