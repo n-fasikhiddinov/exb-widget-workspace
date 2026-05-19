@@ -5,12 +5,14 @@ interface CustomInputProps {
     name: string
     value: string | null
     onChange: (value: string) => void
+    placeholder?: string
 }
 
 export default function CustomInput({
     name,
     value,
-    onChange
+    onChange,
+    placeholder,
 }: CustomInputProps) {
     const safeValue = value ?? ""
     const [hasContent, setContent] = React.useState<Boolean>(safeValue.length > 0)
@@ -46,6 +48,7 @@ export default function CustomInput({
             <input
                 className={`customInput ${hasContent ? "inputActive" : ""}`}
                 value={safeValue}
+                placeholder={hasContent ? placeholder : ""}
                 onChange={(event: any) => onChange(event.target.value)}
                 onFocus={() => setContent(true)}
                 onBlur={() => setContent(safeValue.length > 0)}

@@ -1,14 +1,18 @@
 import { React } from "jimu-core"
 import CustomInput from "../CustomInput/CustomInput"
 import { defaultFilter, filterStruct } from "../../config"
+import { LangKey, t } from "../../../configs/translations"
 import "./Filter.css"
 
 interface FilterProps {
     getFilter: filterStruct
     setFilter: React.Dispatch<React.SetStateAction<filterStruct>>
+    lang: LangKey
 }
 
-export default function Filter({ getFilter, setFilter }: FilterProps) {
+const datePlaceholder = "2026.05.19 14:30:00"
+
+export default function Filter({ getFilter, setFilter, lang }: FilterProps) {
     const setValue = (field: keyof filterStruct, value: string) => {
         setFilter((prev: filterStruct) => ({
             ...prev,
@@ -19,11 +23,12 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
 
     return (
         <div className="filterArea">
-            <div className="filterTitle">Фильтр</div>
+            <div className="filterTitle">{t("filterTitle", lang)}</div>
+            <div className="filterHint">{t("filterHint", lang)}</div>
 
             <div className="filterBlock">
                 <CustomInput
-                    name="Название портала"
+                    name={t("portalName", lang)}
                     value={getFilter.portal_name}
                     onChange={(value: string) => setValue("portal_name", value)}
                 />
@@ -31,7 +36,7 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
 
             <div className="filterBlock">
                 <CustomInput
-                    name="ID портала"
+                    name={t("portalId", lang)}
                     value={getFilter.portalid}
                     onChange={(value: string) => setValue("portalid", value)}
                 />
@@ -39,7 +44,7 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
 
             <div className="filterBlock">
                 <CustomInput
-                    name="ID пользователя"
+                    name={t("userId", lang)}
                     value={getFilter.user_id}
                     onChange={(value: string) => setValue("user_id", value)}
                 />
@@ -47,23 +52,7 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
 
             <div className="filterBlock">
                 <CustomInput
-                    name="Имя пользователя"
-                    value={getFilter.user_name}
-                    onChange={(value: string) => setValue("user_name", value)}
-                />
-            </div>
-
-            <div className="filterBlock">
-                <CustomInput
-                    name="Ф.И.О."
-                    value={getFilter.full_name}
-                    onChange={(value: string) => setValue("full_name", value)}
-                />
-            </div>
-
-            <div className="filterBlock">
-                <CustomInput
-                    name="Страна"
+                    name={t("country", lang)}
                     value={getFilter.country}
                     onChange={(value: string) => setValue("country", value)}
                 />
@@ -71,16 +60,18 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
 
             <div className="filterBlock">
                 <CustomInput
-                    name="Дата от"
+                    name={t("dateFrom", lang)}
                     value={getFilter.date_from}
+                    placeholder={datePlaceholder}
                     onChange={(value: string) => setValue("date_from", value)}
                 />
             </div>
 
             <div className="filterBlock">
                 <CustomInput
-                    name="Дата до"
+                    name={t("dateTo", lang)}
                     value={getFilter.date_to}
+                    placeholder={datePlaceholder}
                     onChange={(value: string) => setValue("date_to", value)}
                 />
             </div>
@@ -90,7 +81,7 @@ export default function Filter({ getFilter, setFilter }: FilterProps) {
                 className="filterResetButton"
                 onClick={() => setFilter({ ...defaultFilter })}
             >
-                Сбросить фильтр
+                {t("resetFilter", lang)}
             </button>
         </div>
     )

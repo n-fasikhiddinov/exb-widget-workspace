@@ -1,28 +1,57 @@
 .filterArea {
-    width: 420px;
-    height: 550px;
-    background-color: #f9fafb;
-    padding: 10px;
-    border-radius: 10px;
+    width: 440px;
+    min-height: 560px;
+    background: rgba(var(--card-bg), 0.96);
+    color: rgb(var(--text-color));
+    border: 1px solid rgba(var(--border-color), 0.95);
+    padding: 16px;
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .filterTitle {
     width: 100%;
-    height: 40px;
+    height: 36px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     font-size: 20px;
-    font-weight: bold
+    font-weight: 850;
+    letter-spacing: -0.02em;
+    padding-left: 14px;
+    position: relative;
+}
+
+.filterTitle::before {
+    position: absolute;
+    left: 0;
+    top: 7px;
+    content: "";
+    width: 5px;
+    height: 22px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgb(var(--accent-color)), rgb(var(--accent-second)));
+}
+
+.filterHint {
+    width: 100%;
+    margin-bottom: 14px;
+    color: rgb(var(--text-muted));
+    font-size: 12px;
+    line-height: 1.35;
+    background: rgba(var(--card-bg-strong), 0.74);
+    border: 1px solid rgba(var(--border-color), 0.72);
+    border-radius: 12px;
+    padding: 10px 12px;
 }
 
 .filterBlock {
     width: 100%;
-    height: 40px;
-    margin-bottom: 10px;
+    height: 44px;
+    margin-bottom: 13px;
 }
 
 .FilterDate {
@@ -30,24 +59,25 @@
     height: 100%;
     position: absolute;
     top: 0%;
-    border: 1px solid #77777780;
-    border-radius: 5px;
-    background-color: #00000000;
-    font-size: 15px;
+    border: 1px solid rgba(var(--border-color), 0.95);
+    border-radius: 12px;
+    background: transparent;
+    color: rgb(var(--text-color));
+    font-size: 14px;
     z-index: 10;
-    padding: 0 10px;
-}
-.filterResetButton {
-    width: 100%;
-    height: 38px;
-    margin-top: auto;
-    border-radius: 8px;
-    background-color: rgb(59, 130, 246);
-    color: #ffffff;
-    font-weight: 700;
-    cursor: pointer;
+    padding: 0 12px;
 }
 
-.filterResetButton:hover {
-    opacity: 0.9;
+.filterResetButton {
+    width: 100%;
+    height: 42px;
+    margin-top: auto;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgb(var(--accent-color)), rgb(var(--accent-second)));
+    color: #04111f;
+    font-weight: 850;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(var(--accent-color), 0.2);
 }
+
+.filterResetButton:hover { opacity: 0.92; }
