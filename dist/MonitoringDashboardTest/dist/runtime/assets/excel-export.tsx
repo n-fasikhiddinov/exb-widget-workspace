@@ -74,9 +74,10 @@ const labels: Record<string, Record<string, string>> = {
     fullPeriod: { RU: "За всё время", UZ: "Barcha davr uchun", EN: "All time" },
     monitoringStart: { RU: "Начало мониторинга", UZ: "Monitoring boshlanishi", EN: "Monitoring started" },
     user: { RU: "Пользователь", UZ: "Foydalanuvchi", EN: "User" },
-    duration: { RU: "Время, ч", UZ: "Vaqt, soat", EN: "Hours" },
+    duration: { RU: "Общее время", UZ: "Umumiy vaqt", EN: "Total time" },
     count: { RU: "Количество входов", UZ: "Kirishlar soni", EN: "Login count" },
     total: { RU: "ИТОГО", UZ: "JAMI", EN: "TOTAL" },
+    portalTotal: { RU: "Итог", UZ: "Jami", EN: "Total" },
     empty: { RU: "Нет данных", UZ: "Ma’lumot yo‘q", EN: "No data" },
 }
 
@@ -134,13 +135,13 @@ function excelColumnName(column: number): string {
     return result
 }
 
-function secondsToHours(seconds: unknown): number {
-    return Number(seconds || 0) / 3600
+function secondsToExcelDuration(seconds: unknown): number {
+    return Number(seconds || 0) / 86400
 }
 
 function portalColumnWidth(portal: SummaryColumn): number {
     const cities = Array.isArray(portal.cities) ? portal.cities : []
-    return Math.max(cities.length, 1) * 2
+    return Math.max(cities.length, 1) * 2 + 2
 }
 
 async function readJson<T>(url: string): Promise<T> {
@@ -531,7 +532,7 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                     ? cities
                     : [{ key: portal.key, city: portal.portal_name }]
                 const portalStartColumn = currentColumn
-                const portalEndColumn = portalStartColumn + cityList.length * 2 - 1
+                const portalEndColumn = portalStartColumn + cityList.length * 2 + 1
 
                 sheet.range(portalHeaderRow, portalStartColumn, portalHeaderRow, portalEndColumn)
                     .merged(true)
@@ -561,6 +562,23 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                     sheet.column(countColumn).width(15)
                     currentColumn += 2
                 })
+
+                sheet.range(cityHeaderRow, currentColumn, cityHeaderRow, currentColumn + 1)
+                    .merged(true)
+                    .value(text("portalTotal", lang))
+                    .style({ ...headerStyle, fill: "E2F0D9" })
+
+                sheet.cell(metricHeaderRow, currentColumn)
+                    .value(text("duration", lang))
+                    .style({ ...headerStyle, fill: "E2F0D9" })
+
+                sheet.cell(metricHeaderRow, currentColumn + 1)
+                    .value(text("count", lang))
+                    .style({ ...headerStyle, fill: "E2F0D9" })
+
+                sheet.column(currentColumn).width(15)
+                sheet.column(currentColumn + 1).width(16)
+                currentColumn += 2
             })
 
             rows.forEach((row: SummaryRow, rowIndex: number) => {
@@ -577,12 +595,18 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                         ? cities
                         : [{ key: portal.key, city: portal.portal_name }]
 
+                    const portalDurationColumns: number[] = []
+                    const portalCountColumns: number[] = []
+
                     cityList.forEach((city: SummaryCity) => {
                         const cell = row.cells?.[city.key]
 
+                        portalDurationColumns.push(valueColumn)
+                        portalCountColumns.push(valueColumn + 1)
+
                         sheet.cell(targetRow, valueColumn)
-                            .value(secondsToHours(cell?.total_duration))
-                            .style({ ...normalStyle, numberFormat: "0.0" })
+                            .value(secondsToExcelDuration(cell?.total_duration))
+                            .style({ ...normalStyle, numberFormat: "[h]:mm:ss" })
 
                         sheet.cell(targetRow, valueColumn + 1)
                             .value(Number(cell?.session_count || 0))
@@ -590,6 +614,23 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
 
                         valueColumn += 2
                     })
+
+                    const durationCells = portalDurationColumns
+                        .map((column: number) => `${excelColumnName(column)}${targetRow}`)
+                        .join(",")
+                    const countCells = portalCountColumns
+                        .map((column: number) => `${excelColumnName(column)}${targetRow}`)
+                        .join(",")
+
+                    sheet.cell(targetRow, valueColumn)
+                        .formula(`SUM(${durationCells})`)
+                        .style({ ...totalStyle, numberFormat: "[h]:mm:ss" })
+
+                    sheet.cell(targetRow, valueColumn + 1)
+                        .formula(`SUM(${countCells})`)
+                        .style({ ...totalStyle, numberFormat: "0" })
+
+                    valueColumn += 2
                 })
             })
 
@@ -604,7 +645,7 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                 if (rows.length) {
                     sheet.cell(totalRow, column)
                         .formula(`SUM(${durationLetter}${dataStartRow}:${durationLetter}${totalRow - 1})`)
-                        .style({ ...totalStyle, numberFormat: "0.0" })
+                        .style({ ...totalStyle, numberFormat: "[h]:mm:ss" })
 
                     sheet.cell(totalRow, column + 1)
                         .formula(`SUM(${countLetter}${dataStartRow}:${countLetter}${totalRow - 1})`)
@@ -612,7 +653,7 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                 } else {
                     sheet.cell(totalRow, column)
                         .value(0)
-                        .style({ ...totalStyle, numberFormat: "0.0" })
+                        .style({ ...totalStyle, numberFormat: "[h]:mm:ss" })
 
                     sheet.cell(totalRow, column + 1)
                         .value(0)
