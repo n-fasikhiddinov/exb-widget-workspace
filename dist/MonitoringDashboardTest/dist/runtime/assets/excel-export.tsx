@@ -1,12 +1,18 @@
 import XlsxPopulate from "xlsx-populate/browser/xlsx-populate"
 import { API_URL, buildQuery, buildSummaryTableUrl, fetchOptions } from "../config"
 
-export type SummaryExportMode = "full" | "monthly" | "last_month"
+export type SummaryExportMode = "full" | "monthly" | "last_month" | "raw_info"
+
+type SummaryCity = {
+    key: string
+    city: string
+}
 
 type SummaryColumn = {
     key: string
     portalid?: string | null
     portal_name: string
+    cities?: SummaryCity[]
 }
 
 type SummaryCell = {
@@ -30,8 +36,22 @@ type SummaryResponse = {
     pages?: number
 }
 
+type InfoItem = {
+    [key: string]: unknown
+    date_first_in_int?: number
+    date_first_in_str?: string
+    portalid?: string | null
+    portal_name?: string | null
+}
+
 type InfoResponse = {
-    items?: Array<{ date_first_in_int?: number }>
+    items?: InfoItem[]
+    meta?: {
+        page?: number
+        pages?: number
+        total_pages?: number
+        page_count?: number
+    }
 }
 
 type MonthPeriod = {
@@ -47,12 +67,14 @@ const monthNames: Record<string, string[]> = {
 }
 
 const labels: Record<string, Record<string, string>> = {
-    titleFull: { RU: "Сводная таблица входов пользователей по порталам", UZ: "Foydalanuvchilarning portallarga kirishi bo‘yicha jamlanma jadval", EN: "User portal login summary table" },
+    titleFull: { RU: "Сводная таблица входов пользователей по порталам и городам", UZ: "Foydalanuvchilarning portal va shaharlar bo‘yicha kirish jadvali", EN: "User login summary by portals and cities" },
     titleMonthly: { RU: "Сводная таблица по месяцам", UZ: "Oylar bo‘yicha jamlanma jadval", EN: "Monthly summary table" },
     titleLastMonth: { RU: "Сводная таблица за последний месяц", UZ: "Oxirgi oy uchun jamlanma jadval", EN: "Summary table for the latest month" },
+    titleRawInfo: { RU: "Все данные мониторинга", UZ: "Monitoringning barcha ma’lumotlari", EN: "All monitoring data" },
     fullPeriod: { RU: "За всё время", UZ: "Barcha davr uchun", EN: "All time" },
+    monitoringStart: { RU: "Начало мониторинга", UZ: "Monitoring boshlanishi", EN: "Monitoring started" },
     user: { RU: "Пользователь", UZ: "Foydalanuvchi", EN: "User" },
-    duration: { RU: "Общее время", UZ: "Umumiy vaqt", EN: "Total duration" },
+    duration: { RU: "Время, ч", UZ: "Vaqt, soat", EN: "Hours" },
     count: { RU: "Количество входов", UZ: "Kirishlar soni", EN: "Login count" },
     total: { RU: "ИТОГО", UZ: "JAMI", EN: "TOTAL" },
     empty: { RU: "Нет данных", UZ: "Ma’lumot yo‘q", EN: "No data" },
@@ -112,8 +134,13 @@ function excelColumnName(column: number): string {
     return result
 }
 
-function secondsToExcelTime(seconds: unknown): number {
-    return Number(seconds || 0) / 86400
+function secondsToHours(seconds: unknown): number {
+    return Number(seconds || 0) / 3600
+}
+
+function portalColumnWidth(portal: SummaryColumn): number {
+    const cities = Array.isArray(portal.cities) ? portal.cities : []
+    return Math.max(cities.length, 1) * 2
 }
 
 async function readJson<T>(url: string): Promise<T> {
@@ -145,6 +172,196 @@ async function fetchSummary(dateFrom?: string, dateTo?: string): Promise<Summary
     }
 
     return { ...first, rows }
+}
+
+function formatMonitoringDate(value: unknown, lang: string): string {
+    const timestamp = Number(value || 0)
+    if (!timestamp) return "—"
+
+    const locale = lang === "UZ" ? "uz-UZ" : lang === "EN" ? "en-GB" : "ru-RU"
+
+    return new Intl.DateTimeFormat(locale, {
+        timeZone: "Asia/Tashkent",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    }).format(new Date(timestamp * 1000))
+}
+
+async function fetchAllInfoRows(): Promise<InfoItem[]> {
+    const result: InfoItem[] = []
+    const pageSize = 200
+    let page = 1
+    let detectedPages = 0
+
+    while (page <= 10000) {
+        const response = await readJson<InfoResponse>(
+            `${API_URL}/info?${buildQuery({
+                page,
+                page_size: pageSize,
+                sort_by: "id",
+                order: "desc",
+            })}`,
+        )
+
+        const items = Array.isArray(response.items) ? response.items : []
+        result.push(...items)
+
+        detectedPages = Number(
+            response.meta?.pages ||
+            response.meta?.total_pages ||
+            response.meta?.page_count ||
+            detectedPages ||
+            0,
+        )
+
+        if ((detectedPages > 0 && page >= detectedPages) || items.length < pageSize) {
+            break
+        }
+
+        page += 1
+    }
+
+    return result
+}
+
+async function fetchPortalMonitoringStarts(
+    columns: SummaryColumn[],
+    lang: string,
+): Promise<Map<string, string>> {
+    const dates = new Map<string, string>()
+
+    await Promise.all(
+        columns.map(async (portal: SummaryColumn) => {
+            if (!portal.portalid) {
+                dates.set(portal.key, "—")
+                return
+            }
+
+            const response = await readJson<InfoResponse>(
+                `${API_URL}/info?${buildQuery({
+                    page: 1,
+                    page_size: 1,
+                    sort_by: "date_first_in_int",
+                    order: "asc",
+                    portalid: portal.portalid,
+                })}`,
+            )
+
+            dates.set(
+                portal.key,
+                formatMonitoringDate(response.items?.[0]?.date_first_in_int, lang),
+            )
+        }),
+    )
+
+    return dates
+}
+
+function plainCellValue(value: unknown): string | number | boolean {
+    if (value === null || value === undefined) return ""
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        return value
+    }
+
+    return JSON.stringify(value)
+}
+
+async function exportRawInfoTable(lang: string, downloadWindow: Window | null): Promise<void> {
+    const items = await fetchAllInfoRows()
+
+    if (!items.length) {
+        throw new Error(text("empty", lang))
+    }
+
+    const preferredColumns = [
+        "id",
+        "user_id",
+        "user_name",
+        "full_name",
+        "portalid",
+        "portal_name",
+        "country",
+        "city",
+        "last_ip",
+        "date_first_in_int",
+        "date_first_in_str",
+        "date_last_in_int",
+        "date_last_in_str",
+        "total_time_sec",
+        "total_visits",
+        "active",
+        "last_event",
+        "device",
+        "browser",
+        "os",
+        "user_agent",
+    ]
+
+    const allKeys: string[] = []
+    items.forEach((item: InfoItem) => {
+        Object.keys(item).forEach((key: string) => {
+            if (!allKeys.includes(key)) allKeys.push(key)
+        })
+    })
+
+    const columns = [
+        ...preferredColumns.filter((key: string) => allKeys.includes(key)),
+        ...allKeys.filter((key: string) => !preferredColumns.includes(key)),
+    ]
+
+    const workbook = await XlsxPopulate.fromBlankAsync()
+    const sheet = workbook.sheet(0).name(lang === "EN" ? "All data" : "Все данные")
+    const lastColumnName = excelColumnName(columns.length)
+    const headerStyle = {
+        border: true,
+        bold: true,
+        fontSize: 11,
+        fill: "D9EAF7",
+        wrapText: true,
+        verticalAlignment: "center",
+        horizontalAlignment: "center",
+    }
+    const valueStyle = {
+        border: true,
+        fontSize: 10,
+        verticalAlignment: "center",
+        horizontalAlignment: "left",
+    }
+
+    sheet.range(`A1:${lastColumnName}1`)
+        .merged(true)
+        .value(text("titleRawInfo", lang))
+        .style({ ...headerStyle, fontSize: 15, fill: "B4C7E7" })
+    sheet.row(1).height(34)
+
+    columns.forEach((column: string, index: number) => {
+        const columnNumber = index + 1
+        sheet.cell(3, columnNumber)
+            .value(column)
+            .style(headerStyle)
+        sheet.column(columnNumber).width(Math.min(Math.max(column.length + 4, 16), 28))
+    })
+    sheet.row(3).height(40)
+
+    items.forEach((item: InfoItem, index: number) => {
+        const rowNumber = index + 4
+
+        columns.forEach((column: string, columnIndex: number) => {
+            sheet.cell(rowNumber, columnIndex + 1)
+                .value(plainCellValue(item[column]))
+                .style(valueStyle)
+        })
+    })
+
+    sheet.freezePanes(1, 3)
+
+    const blob = await workbook.outputAsync()
+    triggerDownload(
+        blob,
+        `Monitoring_all_data_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        downloadWindow,
+    )
 }
 
 async function getAvailablePeriods(lang: string): Promise<MonthPeriod[]> {
@@ -199,6 +416,11 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
     }
 
     try {
+        if (mode === "raw_info") {
+            await exportRawInfoTable(lang, downloadWindow)
+            return
+        }
+
         let reportTitle = text("titleFull", lang)
         let fileSuffix = "full"
         let blocks: Array<{ title: string; data: SummaryResponse }> = []
@@ -243,10 +465,15 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
             throw new Error(text("empty", lang))
         }
 
+        const portalMonitoringStarts = await fetchPortalMonitoringStarts(commonColumns, lang)
+
         const workbook = await XlsxPopulate.fromBlankAsync()
         const sheet = workbook.sheet(0).name(lang === "EN" ? "Summary" : "Сводная таблица")
-        const firstPortalColumn = 2
-        const lastColumn = firstPortalColumn + commonColumns.length * 2 - 1
+        const firstDataColumn = 2
+        const measureColumnCount = commonColumns.reduce((total: number, portal: SummaryColumn) => {
+            return total + portalColumnWidth(portal)
+        }, 0)
+        const lastColumn = firstDataColumn + measureColumnCount - 1
         const lastColumnName = excelColumnName(lastColumn)
 
         const normalStyle = {
@@ -279,9 +506,10 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
         blocks.forEach((block) => {
             const rows = Array.isArray(block.data.rows) ? block.data.rows : []
             const titleRow = nextRow
-            const headerRow = titleRow + 1
-            const subHeaderRow = titleRow + 2
-            const dataStartRow = titleRow + 3
+            const portalHeaderRow = titleRow + 1
+            const cityHeaderRow = titleRow + 2
+            const metricHeaderRow = titleRow + 3
+            const dataStartRow = titleRow + 4
             const totalRow = dataStartRow + rows.length
 
             sheet.range(`A${titleRow}:${lastColumnName}${titleRow}`)
@@ -290,23 +518,49 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                 .style({ ...headerStyle, fill: "DDEBF7", fontSize: 12 })
             sheet.row(titleRow).height(26)
 
-            sheet.range(`A${headerRow}:A${subHeaderRow}`)
+            sheet.range(`A${portalHeaderRow}:A${metricHeaderRow}`)
                 .merged(true)
                 .value(text("user", lang))
                 .style(headerStyle)
 
-            commonColumns.forEach((portal: SummaryColumn, portalIndex: number) => {
-                const durationColumn = firstPortalColumn + portalIndex * 2
-                const countColumn = durationColumn + 1
+            let currentColumn = firstDataColumn
 
-                sheet.range(headerRow, durationColumn, headerRow, countColumn)
+            commonColumns.forEach((portal: SummaryColumn) => {
+                const cities = Array.isArray(portal.cities) ? portal.cities : []
+                const cityList = cities.length
+                    ? cities
+                    : [{ key: portal.key, city: portal.portal_name }]
+                const portalStartColumn = currentColumn
+                const portalEndColumn = portalStartColumn + cityList.length * 2 - 1
+
+                sheet.range(portalHeaderRow, portalStartColumn, portalHeaderRow, portalEndColumn)
                     .merged(true)
-                    .value(portal.portal_name)
+                    .value(
+                        `${portal.portal_name}\n${text("monitoringStart", lang)}: ${portalMonitoringStarts.get(portal.key) || "—"}`,
+                    )
                     .style(headerStyle)
-                sheet.cell(subHeaderRow, durationColumn).value(text("duration", lang)).style(headerStyle)
-                sheet.cell(subHeaderRow, countColumn).value(text("count", lang)).style(headerStyle)
-                sheet.column(durationColumn).width(18)
-                sheet.column(countColumn).width(18)
+
+                cityList.forEach((city: SummaryCity) => {
+                    const durationColumn = currentColumn
+                    const countColumn = durationColumn + 1
+
+                    sheet.range(cityHeaderRow, durationColumn, cityHeaderRow, countColumn)
+                        .merged(true)
+                        .value(city.city)
+                        .style(headerStyle)
+
+                    sheet.cell(metricHeaderRow, durationColumn)
+                        .value(text("duration", lang))
+                        .style(headerStyle)
+
+                    sheet.cell(metricHeaderRow, countColumn)
+                        .value(text("count", lang))
+                        .style(headerStyle)
+
+                    sheet.column(durationColumn).width(13)
+                    sheet.column(countColumn).width(15)
+                    currentColumn += 2
+                })
             })
 
             rows.forEach((row: SummaryRow, rowIndex: number) => {
@@ -315,48 +569,65 @@ export async function downloadSummaryExcel(mode: SummaryExportMode, lang: string
                     .value(row.full_name || row.user_name || "—")
                     .style({ ...normalStyle, horizontalAlignment: "left" })
 
-                commonColumns.forEach((portal: SummaryColumn, portalIndex: number) => {
-                    const durationColumn = firstPortalColumn + portalIndex * 2
-                    const countColumn = durationColumn + 1
-                    const cell = row.cells?.[portal.key]
+                let valueColumn = firstDataColumn
 
-                    sheet.cell(targetRow, durationColumn)
-                        .value(secondsToExcelTime(cell?.total_duration))
-                        .style({ ...normalStyle, numberFormat: "[h]:mm:ss" })
-                    sheet.cell(targetRow, countColumn)
-                        .value(Number(cell?.session_count || 0))
-                        .style(normalStyle)
+                commonColumns.forEach((portal: SummaryColumn) => {
+                    const cities = Array.isArray(portal.cities) ? portal.cities : []
+                    const cityList = cities.length
+                        ? cities
+                        : [{ key: portal.key, city: portal.portal_name }]
+
+                    cityList.forEach((city: SummaryCity) => {
+                        const cell = row.cells?.[city.key]
+
+                        sheet.cell(targetRow, valueColumn)
+                            .value(secondsToHours(cell?.total_duration))
+                            .style({ ...normalStyle, numberFormat: "0.0" })
+
+                        sheet.cell(targetRow, valueColumn + 1)
+                            .value(Number(cell?.session_count || 0))
+                            .style({ ...normalStyle, numberFormat: "0" })
+
+                        valueColumn += 2
+                    })
                 })
             })
 
-            sheet.cell(totalRow, 1).value(text("total", lang)).style({ ...totalStyle, horizontalAlignment: "left" })
+            sheet.cell(totalRow, 1)
+                .value(text("total", lang))
+                .style({ ...totalStyle, horizontalAlignment: "left" })
 
-            commonColumns.forEach((_: SummaryColumn, portalIndex: number) => {
-                const durationColumn = firstPortalColumn + portalIndex * 2
-                const countColumn = durationColumn + 1
-                const durationLetter = excelColumnName(durationColumn)
-                const countLetter = excelColumnName(countColumn)
+            for (let column = firstDataColumn; column <= lastColumn; column += 2) {
+                const durationLetter = excelColumnName(column)
+                const countLetter = excelColumnName(column + 1)
 
                 if (rows.length) {
-                    sheet.cell(totalRow, durationColumn)
+                    sheet.cell(totalRow, column)
                         .formula(`SUM(${durationLetter}${dataStartRow}:${durationLetter}${totalRow - 1})`)
-                        .style({ ...totalStyle, numberFormat: "[h]:mm:ss" })
-                    sheet.cell(totalRow, countColumn)
-                        .formula(`SUM(${countLetter}${dataStartRow}:${countLetter}${totalRow - 1})`)
-                        .style(totalStyle)
-                } else {
-                    sheet.cell(totalRow, durationColumn).value(0).style({ ...totalStyle, numberFormat: "[h]:mm:ss" })
-                    sheet.cell(totalRow, countColumn).value(0).style(totalStyle)
-                }
-            })
+                        .style({ ...totalStyle, numberFormat: "0.0" })
 
-            sheet.row(headerRow).height(30)
-            sheet.row(subHeaderRow).height(40)
+                    sheet.cell(totalRow, column + 1)
+                        .formula(`SUM(${countLetter}${dataStartRow}:${countLetter}${totalRow - 1})`)
+                        .style({ ...totalStyle, numberFormat: "0" })
+                } else {
+                    sheet.cell(totalRow, column)
+                        .value(0)
+                        .style({ ...totalStyle, numberFormat: "0.0" })
+
+                    sheet.cell(totalRow, column + 1)
+                        .value(0)
+                        .style({ ...totalStyle, numberFormat: "0" })
+                }
+            }
+
+            sheet.row(portalHeaderRow).height(46)
+            sheet.row(cityHeaderRow).height(28)
+            sheet.row(metricHeaderRow).height(40)
             sheet.row(totalRow).height(28)
             nextRow = totalRow + 2
         })
 
-        sheet.freezePanes(1, 2)
+        sheet.freezePanes(1, 4)
 
         const blob = await workbook.outputAsync()
         triggerDownload(blob, `Monitoring_summary_${fileSuffix}_${new Date().toISOString().slice(0, 10)}.xlsx`, downloadWindow)
