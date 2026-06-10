@@ -1,6 +1,6 @@
 import XlsxPopulate from 'xlsx-populate/browser/xlsx-populate'
 import {
-	uName, uType, otherValue, downloadFile, getRegionKm
+	uName, uType, otherValue, downloadFile
 } from '../../config'
 
 export const exportHandler = async (records: any, name: string, availableIndex: number = -1) => {
@@ -56,8 +56,7 @@ export const exportHandler = async (records: any, name: string, availableIndex: 
 
 	const startXcell = 2
 	let startYcell = 2
-	const regionAreaCol = startXcell + 1
-	const typeStartCol = startXcell + 2
+	const typeStartCol = startXcell + 1
 	const lastCol = typeStartCol + (uType.length * 2) - 1
 
 	sheet.row(startYcell).height(72)
@@ -86,17 +85,12 @@ export const exportHandler = async (records: any, name: string, availableIndex: 
 	sheet.row(startYcell).height(42)
 	sheet.row(startYcell + 1).height(38)
 	sheet.column(startXcell).width(38)
-	sheet.column(regionAreaCol).width(24)
 
 	sheet.range(startYcell, startXcell, startYcell + 1, startXcell)
 		.merged(true)
 		.value(availableIndex < 0 ? "Ҳудуд номи" : uName[availableIndex])
 		.style(headerStyle)
 
-	sheet.range(startYcell, regionAreaCol, startYcell + 1, regionAreaCol)
-		.merged(true)
-		.value("Мониторинг ўтказилган ҳудуднинг майдони\n(км²)")
-		.style(headerStyle)
 
 	uType.forEach((type: any, index: number) => {
 		const col = typeStartCol + (index * 2)
@@ -150,8 +144,6 @@ export const exportHandler = async (records: any, name: string, availableIndex: 
 							isJami(index) ? 'center' : 'left'
 						)
 
-						const km = isJami(index) ? null : getRegionKm(regionName)
-						writeBaseCell(row, regionAreaCol, km === null ? '-' : NumsFormat(km), fill, isJami(index))
 					})
 
 					montKey.forEach((rows: any, yIndex: number) => {
@@ -173,8 +165,6 @@ export const exportHandler = async (records: any, name: string, availableIndex: 
 					const fill = yearIndex & 1 ? 'DDEBF7' : 'FFFFFF'
 					sheet.row(row).height(22)
 					writeBaseCell(row, startXcell, `  ${yearKey} (${montIndex + 1}-мониторинг)`, fill, true)
-					const km = getRegionKm(uName[availableIndex])
-					writeBaseCell(row, regionAreaCol, km === null ? '-' : NumsFormat(km), fill, true)
 
 					montKey[availableIndex].forEach((item: any, xIndex: number) => {
 						writeTypePair(row, xIndex, item, fill, false)
