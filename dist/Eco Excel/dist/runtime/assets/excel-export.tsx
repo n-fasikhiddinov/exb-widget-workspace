@@ -141,15 +141,17 @@ export const exportHandler = async (props: {
 
 	let yCellPos = 2
 
+	/*
+	 * В обоих вариантах выгрузки оставляем отдельный столбец
+	 * для площади мониторинга региона в км².
+	 * props.km теперь влияет только на то, выгружать все годы или последний год.
+	 */
 	let xCellPos = 4
 	let indexPos = 2
 	let namesPos = 1
+	const metricsPerType = 10
 
 	if (!props.km) {
-		xCellPos = 3
-		indexPos = 1
-		namesPos = 0
-
 		const yearKeys = Object.keys(props.data).sort((a, b) => Number(a) - Number(b))
 		const latestYear = yearKeys[yearKeys.length - 1]
 		props.data = latestYear ? { [latestYear]: props.data[latestYear] } : {}
@@ -157,7 +159,7 @@ export const exportHandler = async (props: {
 
 	// -----------------  Header -------------------------
 	sheet.row(yCellPos).height(60)
-	sheet.range(2, 2, yCellPos, xCellPos + uType.length * 5)
+	sheet.range(2, 2, yCellPos, xCellPos + (uType.length - 1) * metricsPerType)
 		.merged(true)
 		.value(`2025-йилда аниқланган майдонларнинг жойга чиқиб ўтказилган мониторинг хулосалари бўйича таҳлили (${date.toLocaleDateString()} ҳолатига кўра)`)
 		.style({
@@ -171,14 +173,18 @@ export const exportHandler = async (props: {
 
 	yCellPos += 1
 
-	sheet.range(yCellPos, xCellPos - indexPos, yCellPos + 1, xCellPos - indexPos)
+	const headerTopRow = yCellPos
+	const headerStatusRow = yCellPos + 1
+	const headerMetricRow = yCellPos + 2
+
+	sheet.range(headerTopRow, xCellPos - indexPos, headerMetricRow, xCellPos - indexPos)
 		.merged(true)
 		.value("№")
 		.style({
 			...valueStyle,
 			fill: colors[0]
 		})
-	sheet.range(yCellPos, xCellPos - namesPos, yCellPos + 1, xCellPos - namesPos)
+	sheet.range(headerTopRow, xCellPos - namesPos, headerMetricRow, xCellPos - namesPos)
 		.merged(true)
 		.value("Худуд номи (ID)")
 		.style({
@@ -186,95 +192,70 @@ export const exportHandler = async (props: {
 			fill: colors[0]
 		})
 
-	if (props.km) {
-		sheet.column(xCellPos).width(23)
-		sheet.range(yCellPos, xCellPos, yCellPos + 1, xCellPos)
-			.value("Мониторинг ўтказилган ҳудуднинг майдони")
+	sheet.column(xCellPos).width(23)
+	sheet.range(headerTopRow, xCellPos, headerStatusRow, xCellPos)
+		.value("Мониторинг ўтказилган ҳудуднинг майдони")
+		.merged(true)
+		.style({
+			...valueStyle,
+			wrapText: true,
+			fill: colors[0]
+		})
+	sheet.cell(headerMetricRow, xCellPos)
+		.value("км²")
+		.style({
+			...valueStyle,
+			fill: colors[0]
+		})
+
+	sheet.row(headerTopRow).height(42)
+	sheet.row(headerStatusRow).height(34)
+	sheet.row(headerMetricRow).height(30)
+
+	for (let typeIndex = 1; typeIndex < uType.length; typeIndex++) {
+		const startColumn = xCellPos + 1 + (typeIndex - 1) * metricsPerType
+		const endColumn = startColumn + metricsPerType - 1
+
+		sheet.range(headerTopRow, startColumn, headerTopRow, endColumn)
 			.merged(true)
+			.value(uType[typeIndex])
 			.style({
 				...valueStyle,
 				wrapText: true,
 				fill: colors[0]
 			})
-		sheet.cell(yCellPos + 2, xCellPos)
-			.value("км²")
-			.style({
-				...valueStyle,
-				fill: colors[0]
-			})
+
+		for (let statusIndex = 0; statusIndex < names.length; statusIndex++) {
+			const statusColumn = startColumn + statusIndex * 2
+			sheet.range(headerStatusRow, statusColumn, headerStatusRow, statusColumn + 1)
+				.merged(true)
+				.value(names[statusIndex])
+				.style({
+					...valueStyle,
+					wrapText: true,
+					fill: colors[0]
+				})
+
+			sheet.cell(headerMetricRow, statusColumn)
+				.value("сони")
+				.style({
+					...valueStyle,
+					wrapText: true,
+					fill: colors[0]
+				})
+
+			sheet.cell(headerMetricRow, statusColumn + 1)
+				.value("майдони (га)")
+				.style({
+					...valueStyle,
+					wrapText: true,
+					fill: colors[0]
+				})
+		}
 	}
 
-	sheet.row(yCellPos).height(30)
-
-	for (let i = 1; i <= 5; i++) {
-		sheet.range(yCellPos, xCellPos + i * 2 - 1, yCellPos, xCellPos + i * 2)
-			.merged(true)
-			.value(names[i - 1])
-			.style({
-				...valueStyle,
-				wrapText: true,
-				fill: colors[0]
-			})
-	}
-
-	for (let i = 1; i <= 10; i++) {
-		sheet.cell(yCellPos + 1, xCellPos + i)
-			.value(i & 1 ? "сони" : "майдони (га)")
-			.style({
-				...valueStyle,
-				wrapText: true,
-				fill: colors[0]
-			})
-	}
-	for (let i = 11; i <= 30; i++) {
-		sheet.cell(yCellPos + 1, xCellPos + i)
-			.value(names[(i - 1) % 5])
-			.style({
-				...valueStyle,
-				wrapText: true,
-				fill: colors[0]
-			})
-	}
-
-	sheet.range(yCellPos, xCellPos + 11, yCellPos, xCellPos + 15)
-		.merged(true)
-		.value("Аҳоли яшаш жойларида эҳтимоли юқори бўлган ноқонуний чиқинди полигонлари сони")
-		.style({
-			...valueStyle,
-			wrapText: true,
-			fill: colors[0]
-		})
-
-	sheet.range(yCellPos, xCellPos + 16, yCellPos, xCellPos + 20)
-		.merged(true)
-		.value("Саноат зоналарида эҳтимоли юқори бўлган ноқонуний чиқинди полигонлари сони")
-		.style({
-			...valueStyle,
-			wrapText: true,
-			fill: colors[0]
-		})
-
-	sheet.range(yCellPos, xCellPos + 21, yCellPos, xCellPos + 25)
-		.merged(true)
-		.value("Дарё муҳофаза ҳудудидаги ноқонуний полигонлар сони")
-		.style({
-			...valueStyle,
-			wrapText: true,
-			fill: colors[0]
-		})
-
-	sheet.range(yCellPos, xCellPos + 26, yCellPos, xCellPos + 30)
-		.merged(true)
-		.value("Қонуний чиқинди полигонлари чегарасидан ташқарига чиқиш ҳолати сони")
-		.style({
-			...valueStyle,
-			wrapText: true,
-			fill: colors[0]
-		})
-
-	yCellPos += 1
-	sheet.freezePanes(0, yCellPos)
-	yCellPos += 1
+	sheet.freezePanes(0, headerMetricRow)
+	yCellPos = headerMetricRow + 1
 
 	Object.keys(props.data).forEach((yearKey: string) => {
 		const yearTotals = createTypeTotals()
@@ -304,9 +285,7 @@ export const exportHandler = async (props: {
 
 			props.data[yearKey][nameKey].forEach((typeItem: any[], typeIndex: number) => {
 				if (typeIndex === 0) {
-					if (props.km) {
-						putValue(xCellPos + typeIndex, yCellPos + nameIndex, typeItem[0].sum, colors[0])
-					}
+					putValue(xCellPos + typeIndex, yCellPos + nameIndex, typeItem[0].sum, colors[0])
 					addMetric(yearTotals[typeIndex][0], typeItem[0])
 					widthCount += isExtended ? 1 : 0
 				}
@@ -319,12 +298,12 @@ export const exportHandler = async (props: {
 					widthCount += isExtended ? 10 : 0
 				}
 				else {
-					fillValueCount(1 + xCellPos + typeIndex * 5, yCellPos + nameIndex, typeItem)
+					fillValueSum(xCellPos + 1 + (typeIndex - 1) * metricsPerType, yCellPos + nameIndex, typeItem)
 
 					typeItem.forEach((metric: any, metricIndex: number) => {
 						addMetric(yearTotals[typeIndex][metricIndex], metric)
 					})
-					widthCount += isExtended ? 5 : 0
+					widthCount += isExtended ? metricsPerType : 0
 				}
 			})
 
@@ -356,18 +335,16 @@ export const exportHandler = async (props: {
 			sheet.column(xCellPos + i + (namesPos !== 0 ? namesPos : 1)).width(15)
 		}
 
-		if (props.km) {
-			putValue(xCellPos, totalRow, yearTotals[0][0].sum, colors[0])
-			putValue(xCellPos, percentRow, yearTotals[0][0].sum ? 100 : 0, colors[0])
-		}
+		putValue(xCellPos, totalRow, yearTotals[0][0].sum, colors[0])
+		putValue(xCellPos, percentRow, yearTotals[0][0].sum ? 100 : 0, colors[0])
 
 		fillValueSum(xCellPos + 1, totalRow, yearTotals[1])
 		fillPercentSum(xCellPos + 1, percentRow, yearTotals[1])
 
 		for (let typeIndex = 2; typeIndex < uType.length; typeIndex++) {
-			const column = 1 + xCellPos + typeIndex * 5
-			fillValueCount(column, totalRow, yearTotals[typeIndex])
-			fillPercentCount(column, percentRow, yearTotals[typeIndex])
+			const column = xCellPos + 1 + (typeIndex - 1) * metricsPerType
+			fillValueSum(column, totalRow, yearTotals[typeIndex])
+			fillPercentSum(column, percentRow, yearTotals[typeIndex])
 		}
 
 		isExtended = false
