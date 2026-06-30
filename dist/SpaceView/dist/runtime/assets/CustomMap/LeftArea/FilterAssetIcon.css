@@ -1,0 +1,63 @@
+.sv-filter-asset-icon {
+    position: relative;
+    display: block;
+    width: var(--sv-filter-icon-size, 24px);
+    height: var(--sv-filter-icon-size, 24px);
+    flex-shrink: 0;
+    line-height: 0;
+    font-size: 0;
+}
+
+.sv-filter-icon-layer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    object-position: center;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+}
+
+.sv-filter-icon-visible {
+    opacity: 1;
+}
+
+.sv-filter-icon-layer-hover {
+    opacity: 0;
+    filter: brightness(1.22) saturate(1.12);
+}
+
+.sv-filter-asset-icon-hoverable:hover .sv-filter-icon-layer.sv-filter-icon-visible:not(.sv-filter-icon-layer-active),
+.sv-filter-asset-icon-hoverable:focus-visible .sv-filter-icon-layer.sv-filter-icon-visible:not(.sv-filter-icon-layer-active) {
+    opacity: 0;
+}
+
+.sv-filter-asset-icon-hoverable:hover .sv-filter-icon-layer-active.sv-filter-icon-visible,
+.sv-filter-asset-icon-hoverable:focus-visible .sv-filter-icon-layer-active.sv-filter-icon-visible {
+    opacity: 0;
+}
+
+.sv-filter-asset-icon-hoverable:hover .sv-filter-icon-layer-hover,
+.sv-filter-asset-icon-hoverable:focus-visible .sv-filter-icon-layer-hover {
+    opacity: 1;
+}
+
+.LeftAreaFilterBtn:hover .sv-filter-asset-icon-hoverable .sv-filter-icon-layer.sv-filter-icon-visible:not(.sv-filter-icon-layer-active),
+.LeftAreaFilterBtn:focus-visible .sv-filter-asset-icon-hoverable .sv-filter-icon-layer.sv-filter-icon-visible:not(.sv-filter-icon-layer-active) {
+    opacity: 0;
+}
+
+.LeftAreaFilterBtn:hover .sv-filter-asset-icon-hoverable .sv-filter-icon-layer-active.sv-filter-icon-visible,
+.LeftAreaFilterBtn:focus-visible .sv-filter-asset-icon-hoverable .sv-filter-icon-layer-active.sv-filter-icon-visible {
+    opacity: 0;
+}
+
+.LeftAreaFilterBtn:hover .sv-filter-asset-icon-hoverable .sv-filter-icon-layer-hover,
+.LeftAreaFilterBtn:focus-visible .sv-filter-asset-icon-hoverable .sv-filter-icon-layer-hover {
+    opacity: 1;
+}

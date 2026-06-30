@@ -1,6 +1,7 @@
 // ─── CustomMap.tsx ────────────────────────────────────────────────────────────
 import { React } from "jimu-core"
 import type { dataStruct } from "../../config"
+import { getThemeBasemap } from "../../config"
 import "./CustomMap.css"
 
 import Map from "@arcgis/core/Map"
@@ -9,7 +10,10 @@ import Graphic from "@arcgis/core/Graphic"
 import ImageryLayer from "@arcgis/core/layers/ImageryLayer"
 import { Extent } from "@arcgis/core/geometry"
 import MosaicRule from "@arcgis/core/layers/support/MosaicRule"
+import RasterFunction from "@arcgis/core/layers/support/RasterFunction"
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine"
+import * as projection from "@arcgis/core/geometry/projection"
+import * as reactiveUtils from "@arcgis/core/core/reactiveUtils"
 import Point from "@arcgis/core/geometry/Point"
 import Polygon from "@arcgis/core/geometry/Polygon"
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer"
@@ -23,6 +27,8 @@ import LeftArea from "./LeftArea/LeftArea"
 import BottomArea from "./BottomArea/BottomArea"
 import RightArea from "./RightArea/RightArea"
 import { collectRastersFromMosaic } from "./RasterFunc"
+import { getImageryLayerOptions } from "../../sgmAuth"
+import Loader from "../../components/Loader/Loader"
 
 import * as mgrs from "mgrs"
 
@@ -44,6 +50,7 @@ export default function CustomMap({
     getLang
 }: customMapProps) {
     const [getReady, setReady] = React.useState(true)
+    const themeRef = React.useRef(getTheme)
     const typeRef = React.useRef("none")
     const mousePointRef = React.useRef<GraphicsLayer | null>(null)
     const importantAreas = React.useRef<GraphicsLayer | null>(null)
@@ -75,6 +82,8 @@ export default function CustomMap({
     })
 
     const [view, setView] = React.useState<MapView | null>(null)
+    const [rasterLoading, setRasterLoading] = React.useState(false)
+    const rasterLoadTokenRef = React.useRef(0)
     const [geometryList, setGeometryList] = React.useState<any[]>([])
     const [rasterList, setRasterList] = React.useState<any[]>([])
     const [getListAction, setListAction] = React.useState({ type: "none", index: -1 })
@@ -83,8 +92,34 @@ export default function CustomMap({
         MGRS: "", mapScale: 1, mapZoom: 1
     })
 
+    const getDefaultBasemap = React.useCallback(
+        () => getThemeBasemap(themeRef.current),
+        []
+    )
+
+    const createMeasureTextSymbol = React.useCallback((text: string, size: number) => {
+        const isDarkTheme = themeRef.current === "Dark"
+
+        return new TextSymbol({
+            text,
+            color: isDarkTheme ? "#f8fafc" : "#0f172a",
+            haloColor: isDarkTheme ? "#020617" : "#ffffff",
+            haloSize: 2,
+            font: { size, weight: "bold" }
+        })
+    }, [])
+
     const whereRef = React.useRef("")
     const debounceTimer = React.useRef<number | null>(null)
+
+    React.useEffect(() => {
+        themeRef.current = getTheme
+    }, [getTheme])
+
+    React.useEffect(() => {
+        if (!mapRef.current) return
+        mapRef.current.basemap = getDefaultBasemap()
+    }, [getDefaultBasemap, getTheme])
     const debouncedCollect = React.useCallback((where: string) => {
         if (debounceTimer.current) clearTimeout(debounceTimer.current)
         debounceTimer.current = window.setTimeout(async () => {
@@ -100,6 +135,125 @@ export default function CustomMap({
         }, 300)
     }, [])
 
+    const projectGeometryToLayer = React.useCallback(async (
+        layer: ImageryLayer,
+        geometry: Polygon
+    ): Promise<Polygon> => {
+        await layer.load()
+        const targetSr = layer.spatialReference
+        if (!targetSr || geometry.spatialReference?.wkid === targetSr.wkid) {
+            return geometry
+        }
+        if (!projection.isLoaded()) {
+            await projection.load()
+        }
+        try {
+            return projection.project(geometry, targetSr) as Polygon
+        } catch {
+            return geometry
+        }
+    }, [])
+
+    const getVisibleAreaGeometry = React.useCallback((): Polygon | null => {
+        const polygons = (importantAreas.current?.graphics.toArray() ?? [])
+            .filter((g) => g.visible)
+            .map((g) => g.geometry)
+            .filter((g): g is Polygon => g?.type === "polygon")
+
+        if (!polygons.length) return null
+        if (polygons.length === 1) return polygons[0]
+
+        try {
+            const united = geometryEngine.union(polygons)
+            return united?.type === "polygon" ? united as Polygon : polygons[0]
+        } catch {
+            return polygons[0]
+        }
+    }, [])
+
+    const waitForRasterDisplay = React.useCallback(async (
+        mapView: MapView,
+        layer: ImageryLayer,
+        loadToken: number,
+        zoomTo?: __esri.Geometry | __esri.Extent
+    ) => {
+        if (loadToken !== rasterLoadTokenRef.current) return
+
+        if (zoomTo) {
+            await mapView.goTo({ target: zoomTo }, { duration: 500, easing: "ease-in-out" })
+            if (loadToken !== rasterLoadTokenRef.current) return
+            await reactiveUtils.whenOnce(() => !mapView.updating)
+        }
+
+        const layerView = await mapView.whenLayerView(layer)
+        if (loadToken !== rasterLoadTokenRef.current) return
+
+        await reactiveUtils.whenOnce(() => !mapView.updating && !layerView.updating)
+
+        // После зума тайлы могут подгружаться повторно — дождёмся стабилизации.
+        if (layerView.updating) {
+            await reactiveUtils.whenOnce(() => !layerView.updating)
+        }
+    }, [])
+
+    const applyRasterMosaicRule = React.useCallback(async (
+        list: any[],
+        options?: { zoomTo?: __esri.Geometry | __esri.Extent }
+    ) => {
+        const layer = mosaicLayers.current
+        const mapView = view
+        if (!layer) return
+
+        const loadToken = ++rasterLoadTokenRef.current
+        const visibleIDs = list.filter((r: any) => r.visible).map((r: any) => r.id)
+
+        if (visibleIDs.length === 0) {
+            layer.mosaicRule = new MosaicRule({ method: "attribute", where: "1=0" })
+            layer.rasterFunction = null
+            layer.visible = false
+            setRasterLoading(false)
+            return
+        }
+
+        setRasterLoading(true)
+
+        try {
+            await layer.load()
+            if (loadToken !== rasterLoadTokenRef.current) return
+
+            const clipGeometry = getVisibleAreaGeometry()
+            let clipFunction: RasterFunction | null = null
+
+            if (clipGeometry) {
+                const projectedClip = await projectGeometryToLayer(layer, clipGeometry)
+                clipFunction = new RasterFunction({
+                    functionName: "Clip",
+                    functionArguments: {
+                        clippingGeometry: projectedClip,
+                        clippingType: "inside",
+                    },
+                })
+            }
+
+            layer.mosaicRule = new MosaicRule({
+                method: "lock-raster",
+                lockRasterIds: visibleIDs,
+            })
+            layer.rasterFunction = clipFunction
+            layer.visible = true
+
+            if (mapView) {
+                await waitForRasterDisplay(mapView, layer, loadToken, options?.zoomTo)
+            }
+        } catch (err) {
+            console.warn("Failed to apply raster display:", err)
+        } finally {
+            if (loadToken === rasterLoadTokenRef.current) {
+                setRasterLoading(false)
+            }
+        }
+    }, [getVisibleAreaGeometry, projectGeometryToLayer, view, waitForRasterDisplay])
+
     // ─── Смена URL ────────────────────────────────────────────────────────────
     React.useEffect(() => {
         if (!mapRef.current || !getUrl) return
@@ -112,12 +266,11 @@ export default function CustomMap({
         if (mosaicLayers.current) { map.remove(mosaicLayers.current); mosaicLayers.current.destroy() }
         if (OverlayLayer.current) { map.remove(OverlayLayer.current); OverlayLayer.current.destroy() }
 
-        const newMosaic = new ImageryLayer({
-            url: getUrl,
+        const newMosaic = new ImageryLayer(getImageryLayerOptions(getUrl, {
             mosaicRule: new MosaicRule({ method: "attribute", where: whereRef.current || "1=0" })
-        })
+        }) as __esri.ImageryLayerProperties)
         // Восстанавливаем видимость
-        const newOverlay = new ImageryLayer({ url: getUrl, visible: wasVisible })
+        const newOverlay = new ImageryLayer(getImageryLayerOptions(getUrl, { visible: wasVisible }) as __esri.ImageryLayerProperties)
 
         mosaicLayers.current = newMosaic
         OverlayLayer.current = newOverlay
@@ -166,7 +319,7 @@ export default function CustomMap({
             if (view && addedGraphics.length > 0 && addedGraphics[0].geometry.extent) {
                 await view.goTo({ target: addedGraphics[0].geometry.extent.expand(1.2) })
             }
-            debouncedCollect(getListAction.index)
+            debouncedCollect(whereRef.current)
         }
         run()
     }, [file, view])
@@ -197,6 +350,9 @@ export default function CustomMap({
                     if (!importantAreas.current || !activList || !graphic) return
                     graphic.visible = !activList[getListAction.index].visible
                     activList[getListAction.index].visible = !activList[getListAction.index].visible
+                    if (rasterList.some((r: any) => r.visible)) {
+                        void applyRasterMosaicRule(rasterList)
+                    }
                     break
                 }
                 case 'gDelete': {
@@ -219,6 +375,9 @@ export default function CustomMap({
                         if (g) g.visible = true
                         item.visible = true
                     })
+                    if (rasterList.some((r: any) => r.visible)) {
+                        void applyRasterMosaicRule(rasterList)
+                    }
                     break
                 }
                 case 'gHideAll': {
@@ -228,6 +387,9 @@ export default function CustomMap({
                         if (g) g.visible = false
                         item.visible = false
                     })
+                    if (rasterList.some((r: any) => r.visible)) {
+                        void applyRasterMosaicRule(rasterList)
+                    }
                     break
                 }
                 case 'gHover': {
@@ -254,7 +416,7 @@ export default function CustomMap({
                     if (!graphic) return
                     const item = activList[getListAction.index]
                     if (!item?.ring) return
-                    graphic.geometry = new Polygon({ rings: [item.ring], spatialReference: item.spatialReference })
+                    graphic.geometry = new Polygon({ rings: item.rings ?? [item.ring], spatialReference: item.spatialReference })
                     graphic.symbol = polygonHoverSymbol.current
                     graphic.visible = true
                     break
@@ -266,45 +428,65 @@ export default function CustomMap({
                 }
                 case "rClicked": {
                     graphic = rasterPolygon.current.graphics.getItemAt(1)
-                    if (!graphic) return
+                    if (!graphic || !view) return
                     if (getListAction.index >= 0) {
                         const item = activList[getListAction.index]
                         if (!item?.ring) return
-                        graphic.geometry = new Polygon({ rings: [item.ring], spatialReference: item.spatialReference })
+
+                        activList.forEach((row: any, i: number) => {
+                            row.visible = i === getListAction.index
+                        })
+
+                        const clipGeometry = getVisibleAreaGeometry()
+                        const rasterFootprint = new Polygon({
+                            rings: item.rings ?? [item.ring],
+                            spatialReference: item.spatialReference,
+                        })
+
+                        let focusGeometry: Polygon = rasterFootprint
+                        if (clipGeometry) {
+                            try {
+                                const clipped = geometryEngine.intersect(clipGeometry, rasterFootprint)
+                                if (clipped?.type === "polygon") {
+                                    focusGeometry = clipped as Polygon
+                                } else if (clipped?.extent) {
+                                    focusGeometry = clipGeometry
+                                }
+                            } catch {
+                                focusGeometry = clipGeometry
+                            }
+                        }
+
+                        graphic.geometry = focusGeometry
                         graphic.symbol = polygonHoverSymbol.current
                         graphic.visible = true
-                        view.goTo({ target: graphic.geometry.extent.expand(1.2) })
+
+                        const zoomTarget = focusGeometry.extent?.expand(1.2)
+                        await applyRasterMosaicRule(
+                            activList,
+                            zoomTarget ? { zoomTo: zoomTarget } : undefined
+                        )
                     } else {
                         graphic.visible = false
                     }
                     break
                 }
                 case "rToggel": {
-                    if (!mosaicLayers.current || !rasterList.length) return
+                    if (!mosaicLayers.current || !activList?.length) return
                     activList[getListAction.index].visible = !activList[getListAction.index].visible
-                    const visibleIDs = rasterList.filter((r: any) => r.visible).map((r: any) => r.id)
-                    mosaicLayers.current.mosaicRule = new MosaicRule({
-                        method: "attribute",
-                        where: visibleIDs.length > 0 ? `OBJECTID IN (${visibleIDs.join(",")})` : "1=0"
-                    })
-                    mosaicLayers.current.visible = false
-                    setTimeout(() => { mosaicLayers.current.visible = true }, 0)
+                    await applyRasterMosaicRule(activList)
                     break
                 }
                 case "rHideAll": {
-                    if (!mosaicLayers.current || !rasterList.length) return
+                    if (!mosaicLayers.current || !activList?.length) return
                     activList.forEach((item: any) => { item.visible = false })
-                    mosaicLayers.current.mosaicRule = new MosaicRule({ method: "attribute", where: "1=0" })
+                    await applyRasterMosaicRule(activList)
                     break
                 }
                 case "rShowAll": {
-                    if (!mosaicLayers.current || !rasterList.length) return
+                    if (!mosaicLayers.current || !activList?.length) return
                     activList.forEach((item: any) => { item.visible = true })
-                    const visibleIDs = rasterList.filter((r: any) => r.visible).map((r: any) => r.id)
-                    mosaicLayers.current.mosaicRule = new MosaicRule({
-                        method: "attribute",
-                        where: `OBJECTID IN (${visibleIDs.join(",")})`
-                    })
+                    await applyRasterMosaicRule(activList)
                     break
                 }
             }
@@ -315,6 +497,7 @@ export default function CustomMap({
                 await collectRastersFromMosaic({
                     mosaic: mosaicLayers.current, polygonLayer: importantAreas.current,
                     outFields: ["*"], setRasterList,
+                    where: whereRef.current,
                     isReady: (readyState: boolean) => { setReady(readyState) }
                 })
             }
@@ -338,7 +521,7 @@ export default function CustomMap({
 
         if (!mapContainerRef.current) return
 
-        const map = new Map({ basemap: "dark-gray-vector" })
+        const map = new Map({ basemap: getDefaultBasemap() })
         mapRef.current = map
 
         const mapView = new MapView({
@@ -349,8 +532,10 @@ export default function CustomMap({
             ui: { components: [] }
         })
 
-        mosaicLayers.current = new ImageryLayer({ url: getUrl, mosaicRule: new MosaicRule({ method: "attribute", where: "1=0" }) })
-        OverlayLayer.current = new ImageryLayer({ url: getUrl, visible: false })
+        mosaicLayers.current = new ImageryLayer(getImageryLayerOptions(getUrl, {
+            mosaicRule: new MosaicRule({ method: "attribute", where: "1=0" })
+        }) as __esri.ImageryLayerProperties)
+        OverlayLayer.current = new ImageryLayer(getImageryLayerOptions(getUrl, { visible: false }) as __esri.ImageryLayerProperties)
 
         importantAreas.current = new GraphicsLayer({ id: "ImportantAreas" })
         rasterPolygon.current = new GraphicsLayer({ id: "rasterPolygon" })
@@ -436,7 +621,7 @@ export default function CustomMap({
                 if (geoPoints.length >= 2) {
                     const p1 = geoPoints[geoPoints.length - 2], p2 = geoPoints[geoPoints.length - 1]
                     const dist = geometryEngine.geodesicLength(new Polyline({ paths: [[p1, p2]], spatialReference: { wkid: 4326 } }), "meters")
-                    lineTextLayer.current?.add(new Graphic({ geometry: new Point({ longitude: (p1[0] + p2[0]) / 2, latitude: (p1[1] + p2[1]) / 2, spatialReference: { wkid: 4326 } }), symbol: new TextSymbol({ text: dist > 1000 ? `${(dist / 1000).toFixed(2)} км` : `${dist.toFixed(1)} м`, color: "#000", haloColor: "#fff", haloSize: 2, font: { size: 12, weight: "bold" } }), attributes: { type: "line-text", lineId: currentLineId, segmentIndex: geoPoints.length - 2 } }))
+                    lineTextLayer.current?.add(new Graphic({ geometry: new Point({ longitude: (p1[0] + p2[0]) / 2, latitude: (p1[1] + p2[1]) / 2, spatialReference: { wkid: 4326 } }), symbol: createMeasureTextSymbol(dist > 1000 ? `${(dist / 1000).toFixed(2)} км` : `${dist.toFixed(1)} м`, 12), attributes: { type: "line-text", lineId: currentLineId, segmentIndex: geoPoints.length - 2 } }))
                 }
                 return
             }
@@ -472,7 +657,7 @@ export default function CustomMap({
                 if (geoPoints.length >= 1) {
                     const last = geoPoints[geoPoints.length - 1], curr = [p.longitude, p.latitude]
                     const dist = geometryEngine.geodesicLength(new Polyline({ paths: [[last, curr]], spatialReference: { wkid: 4326 } }), "meters")
-                    lineTextLayer.current?.add(new Graphic({ geometry: new Point({ longitude: (last[0] + curr[0]) / 2, latitude: (last[1] + curr[1]) / 2, spatialReference: { wkid: 4326 } }), symbol: new TextSymbol({ text: dist > 1000 ? `${(dist / 1000).toFixed(2)} км` : `${dist.toFixed(1)} м`, color: "#000", haloColor: "#fff", haloSize: 2, font: { size: 12, weight: "bold" } }), attributes: { type: "line-text-preview", lineId: currentLineId } }))
+                    lineTextLayer.current?.add(new Graphic({ geometry: new Point({ longitude: (last[0] + curr[0]) / 2, latitude: (last[1] + curr[1]) / 2, spatialReference: { wkid: 4326 } }), symbol: createMeasureTextSymbol(dist > 1000 ? `${(dist / 1000).toFixed(2)} км` : `${dist.toFixed(1)} м`, 12), attributes: { type: "line-text-preview", lineId: currentLineId } }))
                 }
             } else if (typeRef.current === "area") {
                 if (geoPoints.length === 0) return
@@ -487,7 +672,7 @@ export default function CustomMap({
                 }
                 const area = Math.abs(geometryEngine.geodesicArea(previewLine.geometry as Polygon, "square-kilometers"))
                 lineTextLayer.current?.removeAll()
-                lineTextLayer.current?.add(new Graphic({ geometry: (previewLine.geometry as Polygon).centroid, symbol: new TextSymbol({ text: `${area.toFixed(2)} км²`, color: "#000", haloColor: "#fff", haloSize: 2, font: { size: 14, weight: "bold" } }), attributes: { type: "area-center" } }))
+                lineTextLayer.current?.add(new Graphic({ geometry: (previewLine.geometry as Polygon).centroid, symbol: createMeasureTextSymbol(`${area.toFixed(2)} км²`, 14), attributes: { type: "area-center" } }))
             } else {
                 hoverGraphic.geometry = new Polygon({ rings: [[[p.longitude, p.latitude]]], spatialReference: { wkid: 4326 } })
             }
@@ -511,7 +696,13 @@ export default function CustomMap({
     const handleChange = React.useCallback((type: string, index: number) => { setListAction({ type, index }) }, [])
 
     return (
-        <div ref={mapContainerRef} className="mapArea">
+        <div className="mapArea">
+            <div ref={mapContainerRef} className="mapCanvas" />
+            {rasterLoading && (
+                <div className="mapRasterLoader" aria-busy="true">
+                    <Loader ariaLabel="Tasvir yuklanmoqda" />
+                </div>
+            )}
             <LeftArea geomList={memoGeomList} rasterList={memoRasterList} onChange={handleChange} getTheme={getTheme} getLang={getLang} isReady={getReady} />
 
             {view && <BottomArea viewMap={view} mapData={mapData} onChange={setMapData} getTheme={getTheme} />}

@@ -1,0 +1,44 @@
+.sv-asset-icon {
+    position: relative;
+    display: block;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.sv-asset-icon .sv-icon-layer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+}
+
+.sv-asset-icon .sv-icon-visible {
+    opacity: 1;
+}
+
+.sv-asset-icon-hoverable:hover .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active),
+.sv-asset-icon-hoverable:focus-visible .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active) {
+    opacity: 0;
+}
+
+.sv-asset-icon-hoverable:hover .sv-icon-layer-active,
+.sv-asset-icon-hoverable:focus-visible .sv-icon-layer-active {
+    opacity: 1;
+    filter: brightness(1.22) saturate(1.12);
+}
+
+.sv-icon-button:hover .sv-asset-icon-hoverable .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active),
+.sv-icon-button:focus-visible .sv-asset-icon-hoverable .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active) {
+    opacity: 0;
+}
+
+.sv-icon-button:hover .sv-asset-icon-hoverable .sv-icon-layer-active,
+.sv-icon-button:focus-visible .sv-asset-icon-hoverable .sv-icon-layer-active {
+    opacity: 1;
+    filter: brightness(1.22) saturate(1.12);
+}

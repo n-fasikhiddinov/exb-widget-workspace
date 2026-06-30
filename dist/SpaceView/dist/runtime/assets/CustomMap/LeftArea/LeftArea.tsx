@@ -6,22 +6,50 @@ import AngleIcon from "../../imgs/Angle.png"
 
 import {
     allThemes,
-    FilterIcon,
     ZoomIcon,
     CheckIcon,
     DeleteIcon,
     LocationIcon,
     ImageIcon,
-    translate
+    translate,
+    type WidgetTheme,
 } from "../../../config"
 
+import FilterAssetIcon from "./FilterAssetIcon"
 import Popup from "../Popup/Popup"
+import Loader from "../../../components/Loader/Loader"
 
 const LeftAreaTypes = [
     "Hududlar",
     "Tasvirlar"
 ] as const
 type LeftAreaType = typeof LeftAreaTypes[number];
+
+function RasterThumbnail({ src, getTheme }: { src?: string; getTheme: string }) {
+    const [failed, setFailed] = React.useState(false)
+
+    React.useEffect(() => {
+        setFailed(false)
+    }, [src])
+
+    const hasImage = Boolean(src?.trim()) && !failed
+
+    if (!hasImage) {
+        return (
+            <div className="ItemIconPlaceholder" aria-hidden="true">
+                <ImageIcon size="50%" color={`rgb(${allThemes[getTheme]["--main-muted-color-rgb"]})`} />
+            </div>
+        )
+    }
+
+    return (
+        <img
+            src={src}
+            alt=""
+            onError={() => setFailed(true)}
+        />
+    )
+}
 
 interface leftAreaProps {
     geomList: any[],
@@ -50,6 +78,38 @@ function LeftArea({
         select: 0
     })
     const [getType, setType] = React.useState<LeftAreaType>(LeftAreaTypes[0])
+    const listScrollRef = React.useRef<HTMLDivElement | null>(null)
+    const [showTopFade, setShowTopFade] = React.useState(false)
+    const [showBottomFade, setShowBottomFade] = React.useState(false)
+
+    const updateListFades = React.useCallback(() => {
+        const el = listScrollRef.current
+        if (!el) {
+            setShowTopFade(false)
+            setShowBottomFade(false)
+            return
+        }
+
+        const maxScroll = el.scrollHeight - el.clientHeight
+        if (maxScroll <= 0) {
+            setShowTopFade(false)
+            setShowBottomFade(false)
+            return
+        }
+
+        setShowTopFade(el.scrollTop > 10)
+        setShowBottomFade(el.scrollTop < maxScroll - 10)
+    }, [])
+
+    const handleListScroll = React.useCallback(() => {
+        updateListFades()
+    }, [updateListFades])
+
+    React.useEffect(() => {
+        updateListFades()
+        window.addEventListener("resize", updateListFades)
+        return () => window.removeEventListener("resize", updateListFades)
+    }, [updateListFades, getType, geomList.length, rasterList.length, isReady])
     const ListTitels: Record<LeftAreaType, string> = {
         "Hududlar": "Sizning hududlaringiz roʻyxati",
         "Tasvirlar": "Natijalar"
@@ -127,22 +187,8 @@ function LeftArea({
             case "Tasvirlar": {
                 if (!isReady) {
                     return (
-                        <div className="loader-container">
-                            <div className="loader">
-                                {/* Центральный неподвижный элемент */}
-                                <div className="center-item">
-                                    {/* Здесь будет твоё центральное изображение */}
-                                    <div className="placeholder center-placeholder" />
-                                </div>
-
-                                {/* Вращающийся элемент вокруг центра */}
-                                <div className="orbit">
-                                    <div className="orbit-item">
-                                        {/* Здесь будет твоё вращающееся изображение */}
-                                        <div className="placeholder orbit-placeholder" />
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="ListLoaderArea">
+                            <Loader ariaLabel="Natijalar yuklanmoqda" fill />
                         </div>
                     )
                 }
@@ -165,7 +211,7 @@ function LeftArea({
                             }}
                         >
                             <div className="ItemIcon">
-                                <img src={item.thumbnail} />
+                                <RasterThumbnail src={item.thumbnail} getTheme={getTheme} />
                                 <div className={`ItemCheckBox ${item.visible ? 'activ' : ''}`} onClick={(event: any) => {
                                     event.stopPropagation();
                                     onChange("rToggel", index);
@@ -243,9 +289,20 @@ function LeftArea({
                         }}>{translate[item][getLang]}</div>
                     ))}
                 </div>
-                <div className="HeaderBtn" onClick={() => { popupType("filter", "", -2) }}>
-                    <FilterIcon size="70%" color={`rgb(${allThemes[getTheme][getAction.type === "filter" ? '--main-activ-color' : "--main-second-color-rgb"]})`} />
-                </div>
+                <button
+                    type="button"
+                    className={`LeftAreaFilterBtn ${getAction.type === "filter" ? "LeftAreaFilterBtn-active" : ""}`}
+                    aria-label={getLang === "RU" ? "Фильтр" : "Filtr"}
+                    aria-pressed={getAction.type === "filter"}
+                    onClick={() => { popupType("filter", "", -2) }}
+                >
+                    <FilterAssetIcon
+                        theme={getTheme as WidgetTheme}
+                        active={getAction.type === "filter"}
+                        hoverable
+                        size={24}
+                    />
+                </button>
             </div>
             <div className="LeftAreaListInfo">
                 <div className="ListAreaTitle">{translate[ListTitels[getType]][getLang]}</div>
@@ -277,7 +334,17 @@ function LeftArea({
                     </div>
                 </div>
             </div>
-            <div className="LeftAreaList">{ListContent()}</div>
+            <div className="LeftAreaListWrap">
+                <div
+                    ref={listScrollRef}
+                    className="LeftAreaList"
+                    onScroll={handleListScroll}
+                >
+                    {ListContent()}
+                </div>
+                {showTopFade && <div className="LeftAreaListTopFade" aria-hidden="true" />}
+                {showBottomFade && <div className="LeftAreaListBottomFade" aria-hidden="true" />}
+            </div>
 
             <Popup
                 actiom={getAction}

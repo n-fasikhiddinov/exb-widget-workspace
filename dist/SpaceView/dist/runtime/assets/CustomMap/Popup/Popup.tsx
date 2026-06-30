@@ -3,12 +3,14 @@ import "./Popup.css"
 
 import Calendar from "../../Calendar/Calendar"
 import MinMaxBar from "../../MinMaxBar/MinMaxBat"
-import ActivCalendar from "../../imgs/DateCalendarActiv.png"
+import SpaceAssetIcon from "../../Header/SpaceAssetIcon"
+import { HeaderCalendarIcon } from "../../Header/headerIcons"
 
 import {
     allThemes,
     CheckIcon,
-    translate
+    translate,
+    type WidgetTheme,
 } from "../../../config"
 
 interface popupProps {
@@ -97,6 +99,9 @@ export default function Popup(props: popupProps) {
         satel_from: "",
         satel_to: ""
     })
+    const [isDateFromOpen, setDateFromOpen] = React.useState(false)
+    const [isDateToOpen, setDateToOpen] = React.useState(false)
+    const theme = props.getTheme as WidgetTheme
 
     const updateFilter = (field: string, value: any) => {
         setFilter((prev: any) => {
@@ -205,12 +210,15 @@ export default function Popup(props: popupProps) {
                         <div className="FilterTitle">{translate["Sanalar oralig’i"][props.getLang]}:</div>
                         <div className="FilterInputBlock">
                             <div className="FilterInputImg">
-                                <img src={ActivCalendar} />
+                                <SpaceAssetIcon theme={theme} active={isDateFromOpen} hoverable>
+                                    <HeaderCalendarIcon theme={theme} active={isDateFromOpen} />
+                                </SpaceAssetIcon>
                             </div>
                             <Calendar
                                 value={getFilter.date_from}
                                 minDate={"01.01.2000"}
                                 maxDate={getFilter.date_to}
+                                onOpenChange={setDateFromOpen}
                                 onChange={(val: string) => {
                                     updateFilter("date_from", val)
                                 }}
@@ -223,11 +231,14 @@ export default function Popup(props: popupProps) {
                         </div>
                         <div className="FilterInputBlock">
                             <div className="FilterInputImg">
-                                <img src={ActivCalendar} />
+                                <SpaceAssetIcon theme={theme} active={isDateToOpen} hoverable>
+                                    <HeaderCalendarIcon theme={theme} active={isDateToOpen} />
+                                </SpaceAssetIcon>
                             </div>
                             <Calendar
                                 value={getFilter.date_to}
                                 minDate={getFilter.date_from}
+                                onOpenChange={setDateToOpen}
                                 onChange={(val: string) => {
                                     updateFilter("date_to", val)
                                 }}

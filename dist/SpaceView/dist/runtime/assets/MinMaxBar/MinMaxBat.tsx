@@ -1,4 +1,5 @@
 import { React } from "jimu-core";
+import type { CSSProperties } from "react";
 import "./MinMaxBar.css";
 
 interface barValues {
@@ -20,11 +21,8 @@ interface minMaxBarProps {
 
 export default function MinMaxBar(props: minMaxBarProps) {
     const barRef = React.useRef<HTMLDivElement>(null);
-    const minRef = React.useRef<HTMLDivElement>(null);
-    const maxRef = React.useRef<HTMLDivElement>(null);
 
     const [controlType, setControlType] = React.useState<"none" | "min" | "max">("none");
-    const [mode] = React.useState<"interval" | "single">("interval"); // Пока оставляем только interval, но можно расширить
 
     const range = props.maxValue - props.minValue;
 
@@ -45,7 +43,6 @@ export default function MinMaxBar(props: minMaxBarProps) {
                 : clampAndStep(props.initialMax as number),
     });
 
-    // Обновление при изменении initial значений или границ
     React.useEffect(() => {
         const newMin =
             props.initialMin === "" || props.initialMin === undefined
@@ -59,51 +56,40 @@ export default function MinMaxBar(props: minMaxBarProps) {
         setCurrValues({ minVal: newMin, maxVal: newMax });
     }, [props.initialMin, props.initialMax, props.minValue, props.maxValue, props.step]);
 
-    // Функция для обновления позиций ползунков
-    const updateThumbPositions = () => {
-        const bar = barRef.current;
-        if (!bar) return;
+    const minPercent = range === 0 ? 0 : (currValues.minVal - props.minValue) / range;
+    const maxPercent = range === 0 ? 1 : (currValues.maxVal - props.minValue) / range;
 
-        const rect = bar.getBoundingClientRect();
-        const width = rect.width;
-
-        if (width === 0) return; // Ещё не отрендерилось
-
-        const minPercent = (currValues.minVal - props.minValue) / range;
-        const maxPercent = (currValues.maxVal - props.minValue) / range;
-
-        if (minRef.current) {
-            minRef.current.style.left = `${minPercent * width}px`;
-        }
-
-        if (maxRef.current) {
-            maxRef.current.style.left = `${maxPercent * width}px`;
-        }
+    const fillStyle: CSSProperties = {
+        left: `${minPercent * 100}%`,
+        width: `${Math.max(0, (maxPercent - minPercent) * 100)}%`,
     };
 
-    // Обновление позиций после рендера и при изменении значений/размеров
-    React.useLayoutEffect(() => {
-        updateThumbPositions();
-    }, [currValues, range]);
+    const thumbStyle = (percent: number): CSSProperties => ({
+        left: `${percent * 100}%`,
+    });
 
-    // Обновление при ресайзе окна
+    const emitChange = (values: barValues) => {
+        let retMin = values.minVal;
+        let retMax = values.maxVal;
+
+        if (!props.inclusive) {
+            retMin = Number((retMin + props.step).toFixed(6));
+            retMax = Number((retMax - props.step).toFixed(6));
+        }
+
+        props.onChange(retMin, retMax);
+    };
+
     React.useEffect(() => {
-        const handleResize = () => updateThumbPositions();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [currValues, range]);
-
-    // Обработка перетаскивания
-    React.useEffect(() => {
-        const bar = barRef.current;
-        if (!bar) return;
-
-        const barRect = bar.getBoundingClientRect();
-        const barWidth = barRect.width;
         const minGap = props.minGap ?? 0;
 
         const move = (e: MouseEvent) => {
-            if (controlType === "none") return;
+            const bar = barRef.current;
+            if (!bar || controlType === "none") return;
+
+            const barRect = bar.getBoundingClientRect();
+            const barWidth = barRect.width;
+            if (barWidth === 0) return;
 
             let mouseX = e.clientX - barRect.left;
             mouseX = Math.max(0, Math.min(mouseX, barWidth));
@@ -126,21 +112,6 @@ export default function MinMaxBar(props: minMaxBarProps) {
                     return updated;
                 });
             }
-
-            // Обновляем позицию сразу
-            updateThumbPositions();
-        };
-
-        const emitChange = (values: barValues) => {
-            let retMin = values.minVal;
-            let retMax = values.maxVal;
-
-            if (!props.inclusive) {
-                retMin = Number((retMin + props.step).toFixed(6));
-                retMax = Number((retMax - props.step).toFixed(6));
-            }
-
-            props.onChange(retMin, retMax);
         };
 
         const stop = () => setControlType("none");
@@ -154,26 +125,30 @@ export default function MinMaxBar(props: minMaxBarProps) {
             document.removeEventListener("mousemove", move);
             document.removeEventListener("mouseup", stop);
         };
-    }, [controlType, currValues, range, props, controlType]);
+    }, [controlType, currValues, range, props]);
 
     return (
         <div className="MinMaxBarArea">
             {props.title && <div className="barTitle">{props.title}</div>}
             <div className="barArea">
                 <div className="bar" ref={barRef}>
+                    <div className="barFill" style={fillStyle} aria-hidden="true" />
                     <div
-                        ref={minRef}
                         data-value={currValues.minVal}
-                        className={`control min ${controlType === "min" ? "activ" : ""}`}
+                        className={`control sv-slider-thumb min ${controlType === "min" ? "activ" : ""}`}
+                        style={thumbStyle(minPercent)}
                         onMouseDown={() => setControlType("min")}
-                    />
-
+                    >
+                        <span className="sv-slider-thumb-grip" aria-hidden="true" />
+                    </div>
                     <div
-                        ref={maxRef}
                         data-value={currValues.maxVal}
-                        className={`control max ${controlType === "max" ? "activ" : ""}`}
+                        className={`control sv-slider-thumb max ${controlType === "max" ? "activ" : ""}`}
+                        style={thumbStyle(maxPercent)}
                         onMouseDown={() => setControlType("max")}
-                    />
+                    >
+                        <span className="sv-slider-thumb-grip" aria-hidden="true" />
+                    </div>
                 </div>
             </div>
         </div>

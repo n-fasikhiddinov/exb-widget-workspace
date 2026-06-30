@@ -11,10 +11,10 @@
     height: Calc(100% - 2 * var(--main-padding));
 
     /* padding: var(--main-padding); */
-    padding: Calc(2*var(--main-padding));
+    padding: 10px;
 
-    background-color: rgba(var(--main-bacground-color-rgb), 1);
-    border-radius: var(--main-border-radius);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+    border-radius: var(--panel-border-radius);
     z-index: 2;
 }
 
@@ -22,38 +22,69 @@
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 5px;
+    gap: 10px;
 }
 
 .LeaftAreaTypes {
-    width: Calc(100% - 5px - 30px);
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
 }
 
 .LeaftAreaType {
-    height: 35px;
-    padding: 5px 20px;
-    border-radius: var(--main-border-radius);
-    background-color: rgba(var(--main-second-color-rgb), 0);
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 10px;
+    border-radius: 16px;
+    background-color: var(--sv-tab-inactive-bg);
+    border: 1px solid transparent !important;
 
-    font-weight: 400;
+    font-weight: 500;
     font-size: 16px;
     line-height: 24px;
     letter-spacing: 2%;
-    vertical-align: bottom;
-    color: rgba(var(--main-second-color-rgb), 1);
-    opacity: 0.6;
+    color: var(--sv-control-text);
+    text-align: center;
 
     cursor: pointer;
     user-select: none;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.LeaftAreaType:hover:not(.activ) {
+    background-color: var(--sv-tab-hover-bg);
+    border-color: var(--sv-tab-hover-border) !important;
 }
 
 .LeaftAreaType.activ {
-    opacity: 1;
-    background-color: rgba(var(--main-second-color-rgb), 0.1);
+    background-color: #3b82f6;
+    color: #ffffff;
+    border-color: transparent !important;
+    font-weight: 600;
+}
+
+.LeaftAreaType.activ:hover {
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+.LeftAreaFilterBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .LeftArea {
@@ -67,18 +98,36 @@
 
     width: 380px;
     height: calc(100% - 2 * var(--main-padding));
-    padding: calc(2 * var(--main-padding));
+    padding: 10px;
 
-    background-color: rgba(var(--main-bacground-color-rgb), 1);
-    border-radius: var(--main-border-radius);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+    border-radius: var(--panel-border-radius);
+}
+
+.LeftAreaListWrap {
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+
+    --sv-list-bottom-fade: linear-gradient(
+        to bottom,
+        rgba(var(--main-surface-color-rgb), 0),
+        rgba(var(--main-surface-color-rgb), var(--sv-list-fade-end, 0.92))
+    );
+    --sv-list-top-fade: linear-gradient(
+        to top,
+        rgba(var(--main-surface-color-rgb), 0),
+        rgba(var(--main-surface-color-rgb), var(--sv-list-fade-end, 0.92))
+    );
 }
 
 .LeftAreaList {
     width: 100%;
+    height: 100%;
     flex: 1 1 auto;
-    /* растягиваем на оставшееся место */
     min-height: 0;
-    /* позволяет scroll работать внутри flex */
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
@@ -98,19 +147,43 @@
 }
 
 .LeftAreaList::-webkit-scrollbar-thumb {
-    background-color: #162131;
+    background-color: rgba(var(--main-scrollbar-thumb-rgb), 1);
     /* цвет ползунка */
     border-radius: 8px;
-    border: 2px solid #2c2c2c;
+
     /* отступы внутри дорожки */
 }
 
 /* Для Firefox */
 .LeftAreaList {
     scrollbar-width: thin;
-    /* тонкий скролл */
-    scrollbar-color: #162131 rgba(var(--main-second-color-rgb), 0);
-    /* thumb track */
+    scrollbar-color: rgba(var(--main-scrollbar-thumb-rgb), 1) rgba(var(--main-second-color-rgb), 0);
+}
+
+.LeftAreaListTopFade,
+.LeftAreaListBottomFade {
+    position: absolute;
+    left: 0;
+    right: 8px;
+    height: 80px;
+    pointer-events: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10;
+}
+
+.LeftAreaListTopFade {
+    top: 0;
+    background: var(--sv-list-top-fade);
+    mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 1) 100%);
+    -webkit-mask-image: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 1) 100%);
+}
+
+.LeftAreaListBottomFade {
+    bottom: 0;
+    background: var(--sv-list-bottom-fade);
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 1) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 1) 100%);
 }
 
 .LeftAreaListInfo {
@@ -122,11 +195,12 @@
 }
 
 .ListAreaTitle {
+    width: 100%;
+    text-align: center;
     font-weight: 400;
     font-size: 22px;
     line-height: 26px;
     letter-spacing: 2%;
-    vertical-align: bottom;
     color: rgba(var(--main-second-color-rgb), 1);
 }
 
@@ -173,20 +247,13 @@
     opacity: 1;
 }
 
-.LeftAreaList {
-    width: 100%;
-    height: 100%;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
 .LeftAreaListItem {
     width: 100%;
     height: 100px;
     /* <-- фиксированная высота */
     border-radius: var(--main-border-radius);
-    border: 1px rgba(var(--main-second-color-rgb), 0.102) solid;
+
+    background-color: rgba(var(--main-surface-elevated-rgb), 1);
     padding: 10px;
     display: flex;
     align-items: center;
@@ -201,18 +268,18 @@
 
 .LeftAreaListItem.Tasvirlar {
     cursor: pointer;
-    background-color: rgba(var(--main-second-color-rgb), 0.1);
+    background-color: rgba(var(--main-surface-elevated-rgb), 1);
     gap: 10px;
 }
 
 .LeftAreaListItem.Tasvirlar:hover {
-    border: 1px solid #3773D555;
-    background-color: #3773D544;
+
+    background-color: rgba(var(--main-activ-color), 0.12);
 }
 
 .LeftAreaListItem.Tasvirlar.activ {
-    border: 1px solid #3773D5CC;
-    background-color: #3773D599;
+
+    background-color: rgba(var(--main-activ-color), 0.18);
 }
 
 .ItemTopContent {
@@ -227,8 +294,8 @@
     height: 20px;
 
     border-radius: 5px;
-    border: 1px solid rgba(var(--main-second-color-rgb), 0.2);
-    background-color: rgba(var(--main-second-color-rgb), 0.133);
+
+    background-color: var(--sv-checkbox-bg);
     cursor: pointer;
 
     display: flex;
@@ -239,13 +306,12 @@
 }
 
 .ItemCheckBox:hover {
-    border: 1px solid #3773D555;
-    background-color: #3773D544;
+    background-color: var(--sv-checkbox-hover-bg);
 }
 
 .ItemCheckBox.activ {
-    border: 1px solid #3773D5CC;
-    background-color: #3773D599;
+
+    background-color: rgba(var(--main-activ-color), 0.18);
 }
 
 .ItemCheckBox>img {
@@ -299,8 +365,8 @@
 
 .ItemBtn:hover {
     border-radius: 5px;
-    border: 1px solid rgba(var(--main-second-color-rgb), 0.2);
-    background-color: rgba(var(--main-second-color-rgb), 0.1);
+
+    background-color: rgba(var(--main-activ-color), 0.12);
 }
 
 .ItemBtn>img {
@@ -326,6 +392,16 @@
     left: 0;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+}
+
+.ItemIconPlaceholder {
+    position: absolute;
+    inset: 0;
+    background-color: var(--sv-checkbox-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ItemRightContent {
@@ -347,7 +423,8 @@
     display: flex;
     align-items: center;
 
-    background-color: rgba(var(--main-second-color-rgb), 0.1);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+
     border-radius: 5px;
     padding: 3px 5px;
 
@@ -404,11 +481,13 @@
 
 
 
-.loader-container {
+.ListLoaderArea {
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
+    justify-content: center;
 }
 
 .loader {
@@ -443,7 +522,7 @@
 .orbit {
     width: 100%;
     height: 100%;
-    border: 2px dashed rgb(var(--main-second-color-rgb));
+
     /* Опционально: пунктирная орбита */
     border-radius: 50%;
     animation: rotate 2s linear infinite;
@@ -484,5 +563,5 @@
 /* Плейсхолдеры для демонстрации (можно удалить) */
 .placeholder {
     background-color: rgb(var(--main-bacground-color-rgb));
-    border: 3px solid rgb(var(--main-second-color-rgb));
+
 }

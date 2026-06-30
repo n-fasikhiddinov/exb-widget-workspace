@@ -10,8 +10,9 @@
     flex-direction: column;
     align-items: start;
 
-    border-radius: var(--main-border-radius);
-    background-color: rgba(var(--main-bacground-color-rgb), 1);
+    border-radius: var(--panel-border-radius);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+    overflow: visible;
 }
 
 .PopupArea.activ {
@@ -90,16 +91,18 @@
 
 .FilterArea {
     width: 100%;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .FilterBlock {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding: 15px;
-    border-bottom: 1px solid rgba(var(--main-second-color-rgb), 0.322);
-    border-radius: var(--main-border-radius);
+    gap: 8px;
+    padding: 0;
 }
 
 .FilterTitle {
@@ -113,10 +116,11 @@
 
 .FilterInputBlock {
     width: 100%;
-    height: 45px;
-    padding: 10px;
-    border-radius: 15px;
-    border: 1px solid #516282;
+    height: 42px;
+    padding: 8px 10px;
+    border-radius: 12px;
+
+    background-color: rgba(var(--main-input-bg-rgb), 1);
 
     display: flex;
     align-items: center;
@@ -124,18 +128,23 @@
 }
 
 .FilterInputImg {
-    width: 25px;
-    height: 25px;
-
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
 }
 
-.FilterInputImg>img {
-    width: 100%;
-    height: 100%;
+.FilterInputBlock:hover .sv-asset-icon-hoverable .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active),
+.FilterInputBlock:focus-within .sv-asset-icon-hoverable .sv-icon-layer.sv-icon-visible:not(.sv-icon-layer-active) {
+    opacity: 0;
+}
+
+.FilterInputBlock:hover .sv-asset-icon-hoverable .sv-icon-layer-active,
+.FilterInputBlock:focus-within .sv-asset-icon-hoverable .sv-icon-layer-active {
+    opacity: 1;
+    filter: brightness(1.22) saturate(1.12);
 }
 
 .FilterDate {

@@ -1,4 +1,5 @@
 import { React } from "jimu-core"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import "./Calendar.css"
 
 interface DateStruct {
@@ -18,6 +19,7 @@ interface DateInputProps {
 	className?: string
 	afterInfo?: string
 	placeholder?: string
+	onOpenChange?: (open: boolean) => void
 }
 
 export default function Calendar(props: DateInputProps) {
@@ -84,6 +86,10 @@ export default function Calendar(props: DateInputProps) {
 		setSelected(parsed)
 		setView(parsed)
 	}, [props.value])
+
+	React.useEffect(() => {
+		props.onOpenChange?.(isOpen)
+	}, [isOpen, props.onOpenChange])
 
 	// ====================== Формат вывода ======================
 	function formatDate(d: DateStruct) {
@@ -215,8 +221,11 @@ export default function Calendar(props: DateInputProps) {
 
 			<div className={`calendarPopup ${isOpen ? "open" : ""}`}>
 				<div className="calendarBtns">
-					<div className="calendarBtn" onClick={handlePrev}>{"<"}</div>
-					<div
+					<button type="button" className="calendarBtn" onClick={handlePrev} aria-label="Previous">
+						<ChevronLeft size={16} strokeWidth={2.25} aria-hidden="true" />
+					</button>
+					<button
+						type="button"
 						className="calendarInfo"
 						onClick={() => {
 							setMode(mode === "days" ? "months" : mode === "months" ? "years" : "days")
@@ -225,8 +234,10 @@ export default function Calendar(props: DateInputProps) {
 						{mode === "days" && `${String(view.month + 1).padStart(2, "0")}.${view.year}`}
 						{mode === "months" && view.year}
 						{mode === "years" && minDate.year > 0 && maxDate.year > 0 && `${minDate.year} - ${maxDate.year}`}
-					</div>
-					<div className="calendarBtn" onClick={handleNext}>{">"}</div>
+					</button>
+					<button type="button" className="calendarBtn" onClick={handleNext} aria-label="Next">
+						<ChevronRight size={16} strokeWidth={2.25} aria-hidden="true" />
+					</button>
 				</div>
 
 				<div className="line" />

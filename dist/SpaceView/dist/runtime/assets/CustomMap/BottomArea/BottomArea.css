@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: space-between;
 
-    background-color: rgba(var(--main-bacground-color-rgb), 1);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
     border-radius: var(--main-border-radius);
 
     padding: 5px 10px;
@@ -75,7 +75,7 @@
     all: unset;
     width: 70px;
     line-height: 1;
-    /* border-bottom: 1px solid #fff; */
+    /* */
     color: rgba(var(--main-second-color-rgb), 1);
     text-align: left;
     -moz-appearance: textfield;

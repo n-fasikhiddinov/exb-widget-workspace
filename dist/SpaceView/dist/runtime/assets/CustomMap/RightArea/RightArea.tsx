@@ -9,8 +9,8 @@ import Topographic from "../../imgs/Topographic.jpg"
 
 import {
     allThemes,
+    getThemeBasemap,
     AreaIcon,
-    CheckIcon,
     CircleIcon,
     LayersIcon,
     MinusIcon,
@@ -32,22 +32,25 @@ interface rightAreaProps {
     onOverlayVisibleChange?: (visible: boolean) => void
 }
 
-const baseMaps = {
-    vector: [
-        { baseName: "streets-night-vector", title: "Streets (Night)", url: Streets },
-        { baseName: "dark-gray-vector", title: "Dark Gray Canvas", url: Dark },
-    ],
-    raster: [
-        { baseName: "satellite", title: "Satellite", url: Hybrid },
-        { baseName: "hybrid", title: "Hybrid", url: Hybrid },
-        { baseName: "topo", title: "Topographic", url: Topographic },
-    ]
-}
+const baseMaps = [
+    { baseName: "gray-vector", title: "Gray Canvas", url: Dark },
+    { baseName: "streets-night-vector", title: "Streets (Night)", url: Streets },
+    { baseName: "dark-gray-vector", title: "Dark Gray Canvas", url: Dark },
+    { baseName: "satellite", title: "Satellite", url: Hybrid },
+    { baseName: "hybrid", title: "Hybrid", url: Hybrid },
+    { baseName: "topo", title: "Topographic", url: Topographic },
+]
 
 export default function RightArea({ map, onChange, overlayMap, getTheme, getLang, onOverlayVisibleChange }: rightAreaProps) {
     const [getType, setType] = React.useState("none")
     const [showBasemaps, setShowBasemaps] = React.useState(false)
     const [showBasemap, setShowBasemap] = React.useState<boolean>(false)
+    const defaultBasemap = getThemeBasemap(getTheme)
+
+    React.useEffect(() => {
+        if (!map) return
+        map.map.basemap = defaultBasemap
+    }, [defaultBasemap, getTheme, map])
 
     if (!map) return null
 
@@ -83,12 +86,11 @@ export default function RightArea({ map, onChange, overlayMap, getTheme, getLang
                             {translate["Asosiy xaritalar"][getLang]}
                         </div>
 
-                        <div className="BasemapGroup">
-                            <div className="BasemapGroupTitle">{translate["Vektor"][getLang]}</div>
-                            {baseMaps.vector.map(bm => (
+                        <div className="BasemapList">
+                            {baseMaps.map(bm => (
                                 <div
                                     key={bm.baseName}
-                                    className={`BasemapItem ${map.map.basemap?.id === bm.baseName ? "active" : ""}`}
+                                    className={`BasemapItem ${map.map.basemap?.id === bm.baseName || map.map.basemap?.portalItem?.id === bm.baseName ? "active" : ""}`}
                                     onClick={() => changeBasemap(bm.baseName)}
                                 >
                                     {bm.title}
@@ -97,31 +99,21 @@ export default function RightArea({ map, onChange, overlayMap, getTheme, getLang
                             ))}
                         </div>
 
-                        <div className="BasemapGroup">
-                            <div className="BasemapGroupTitle">{translate["Raster"][getLang]}</div>
-                            {baseMaps.raster.map(bm => (
-                                <div
-                                    key={bm.baseName}
-                                    className={`BasemapItem ${map.map.basemap?.id === bm.baseName ? "active" : ""}`}
-                                    onClick={() => changeBasemap(bm.baseName)}
-                                >
-                                    {bm.title}
-                                    <div className="BasemapImg"><img src={bm.url} /></div>
-                                </div>
-                            ))}
-
-                            {/* Кнопка визуализации — теперь через toggleOverlay */}
-                            <div className="BasemapItem" onClick={toggleOverlay}>
-                                {translate["Kartografik asos"][getLang]}
-                                <div className={`ItemCheckBox ${showBasemap ? "activ" : ""}`}>
-                                    {showBasemap && (
-                                        <CheckIcon
-                                            size="40%"
-                                            color={`rgb(${allThemes[getTheme]["--main-second-color-rgb"]})`}
-                                        />
-                                    )}
-                                </div>
-                            </div>
+                        <div className="BasemapToggleRow" onClick={toggleOverlay}>
+                            <span>{translate["Kartografik asos"][getLang]}</span>
+                            <button
+                                type="button"
+                                className={`BasemapToggle ${showBasemap ? "BasemapToggleOn" : ""}`}
+                                role="switch"
+                                aria-checked={showBasemap}
+                                aria-label={translate["Kartografik asos"][getLang]}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleOverlay()
+                                }}
+                            >
+                                <span className="BasemapToggleKnob" aria-hidden="true" />
+                            </button>
                         </div>
                     </div>
                 )}

@@ -4,7 +4,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #00000066;
+    background-color: rgba(var(--main-overlay-color-rgb), 0.42);
     z-index: 1000;
 
     display: flex;
@@ -15,8 +15,9 @@
 .DragAndDropBlock {
     width: 420px;
     height: 250px;
-    background-color: rgba(var(--main-bacground-color-rgb), 1);
+    background-color: rgba(var(--main-surface-color-rgb), 1);
     border-radius: var(--main-border-radius);
+
     padding: 20px;
     gap: 20px;
 
@@ -28,14 +29,13 @@
 }
 
 .DragAndDropBlock.drag-over {
-    background-color: rgba(55, 115, 213, 0.25);
-    border: 2px solid rgba(55, 115, 213, 0.8);
-    transition: background-color 0.2s ease, border 0.2s ease;
+    background-color: rgba(var(--main-activ-color), 0.12);
+
+    transition: background-color 0.2s ease;
 }
 
 .DragAndDropBlock.drag-over .DragAndDropDesc {
-    background-color: rgba(55, 115, 213, 0.2);
-    border-color: rgba(55, 115, 213, 0.9);
+    background-color: rgba(var(--main-activ-color), 0.08);
 }
 
 .DragAndDropTitle {
@@ -52,36 +52,8 @@
 .DragAndDropDesc {
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(var(--main-surface-elevated-rgb), 1);
     border-radius: var(--main-border-radius);
-    border: 1px dashed rgba(var(--main-second-color-rgb), 1);
-
-
-    /* border-radius: 10px;
-    --dash-length: 20px;
-    --gap-length: 5px;
-    --border-thickness: 1px;
-    --border-color: rgba(var(--main-second-color-rgb), 1);
-
-    background-image:
-        linear-gradient(to right, var(--border-color) 0 var(--dash-length), transparent var(--dash-length) var(--gap-length)),
-        linear-gradient(to right, var(--border-color) 0 var(--dash-length), transparent var(--dash-length) var(--gap-length)),
-        linear-gradient(to bottom, var(--border-color) 0 var(--dash-length), transparent var(--dash-length) var(--gap-length)),
-        linear-gradient(to bottom, var(--border-color) 0 var(--dash-length), transparent var(--dash-length) var(--gap-length));
-
-    background-position:
-        top left,
-        bottom left,
-        top left,
-        top right;
-
-    background-size:
-        calc(var(--dash-length) + var(--gap-length)) var(--border-thickness),
-        calc(var(--dash-length) + var(--gap-length)) var(--border-thickness),
-        var(--border-thickness) calc(var(--dash-length) + var(--gap-length)),
-        var(--border-thickness) calc(var(--dash-length) + var(--gap-length));
-
-    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y; */
 
     display: flex;
     flex-direction: column;
