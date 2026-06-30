@@ -2,7 +2,6 @@ import { React } from "jimu-core"
 import MapView from "@arcgis/core/views/MapView"
 import "./BottomArea.css"
 
-import MGRSIcon from "../../imgs/MGRS.png"
 
 import {
     allThemes,
