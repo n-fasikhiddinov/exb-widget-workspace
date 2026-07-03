@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "name": "uzcosmos-status-dashboard",
+  "label": "Uzcosmos Status Dashboard",
+  "type": "widget",
+  "version": "1.0.43",
+  "exbVersion": "1.18.0",
+  "author": "Uzcosmos",
+  "description": "Dashboard for monitoring project status in real-time.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {
+    "hasSettingPage": true,
+    "hasConfig": true
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 800,
+    "height": 600
+  }
+}
