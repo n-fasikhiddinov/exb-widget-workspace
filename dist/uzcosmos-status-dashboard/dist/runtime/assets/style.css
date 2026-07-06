@@ -19,7 +19,7 @@
   --color-danger: #D40002;
   --color-danger-light: rgba(212, 0, 2, 0.1);
   --color-neutral: #87888b;
-  --color-neutral-light: #E0E1E5;
+  --color-neutral-light: rgba(0, 0, 0, 0.04);
 
   --text-main: #090909;
   --text-muted: #5a5a5e;
@@ -57,8 +57,8 @@
   --color-danger-light: rgba(212, 0, 2, 0.15);
   
   --color-neutral: #5a5a5e;
+  --color-neutral-light: rgba(255, 255, 255, 0.05);
   --border-color: #2A2B3D;
-  --color-neutral-light: #2A2B3D;
 
   --text-main: #FFFFFF;
   --text-muted: #87888b;
@@ -94,6 +94,19 @@
 
 .widget-uzcosmos-dashboard *:hover {
   scrollbar-color: var(--border-color) transparent;
+}
+
+/* Smooth Theme Transition for ALL elements */
+.widget-uzcosmos-dashboard,
+.widget-uzcosmos-dashboard *,
+.widget-uzcosmos-dashboard *::before,
+.widget-uzcosmos-dashboard *::after {
+  transition: background-color 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important, 
+              border-color 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important, 
+              color 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important, 
+              box-shadow 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important,
+              fill 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important,
+              stroke 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) !important;
 }
 
 .widget-uzcosmos-dashboard *::-webkit-scrollbar {
@@ -381,20 +394,14 @@ button {
 
 
 
-.header {
-
+.uzcosmos-header {
   height: 72px;
-
   padding: 0 32px;
-
   border-bottom: 1px solid var(--border-color);
-
+  background-color: var(--bg-card);
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
 }
 
 
@@ -799,6 +806,19 @@ button {
 
 
 /* RESPONSIVE LAYOUT CLASSES */
+.uzcosmos-stage-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 1fr 1fr 100px 40px;
+  padding: 12px 24px;
+  background-color: var(--color-neutral-light);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1064,6 +1084,146 @@ button {
     transform: translateY(0) scale(1);
   }
 }
+
+/* Анимация при смене проекта */
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 .animate-content {
   animation: contentFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+
+/* Custom Scrollbar for Dropdowns and Lists */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral);
+}
+
+@keyframes uzcosmos-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.8) rotate(-10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* ========================================================= */
+/* SPLASH SCREEN
+/* ========================================================= */
+.splash-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #F9FAFB;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+  opacity: 1;
+  visibility: visible;
+}
+
+.splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.splash-screen.dark {
+  background-color: #0F172A;
+}
+
+.splash-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: pulse-logo 2.5s infinite ease-in-out;
+}
+
+.splash-official-logo {
+  width: auto;
+  height: 120px; /* Base height for the logo */
+  max-width: 80vw;
+  /* Инвертируем белый логотип в темный для светлой темы */
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+.splash-screen.dark .splash-official-logo {
+  /* Оставляем оригинальный (белый) логотип для темной темы */
+  filter: drop-shadow(0 10px 25px rgba(255, 255, 255, 0.1));
+}
+
+@keyframes pulse-logo {
+  0% { transform: scale(0.98); opacity: 0.85; }
+  50% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(0.98); opacity: 0.85; }
+}
+
+/* ========================================================= */
+/* CUSTOM HOVER POPUP (TOOLTIPS)
+/* ========================================================= */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent var(--color-primary) transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 10px); /* below the button + arrow */
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--color-primary); /* Uses the active theme accent color */
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(5px);
+}
+
