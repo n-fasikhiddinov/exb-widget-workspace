@@ -1,0 +1,7 @@
+{
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "rules": [],
+        "fieldJoinOperator": "and"
+    }
+}
