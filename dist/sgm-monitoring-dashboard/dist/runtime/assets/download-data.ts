@@ -25,7 +25,6 @@ function unixSecondsFromDateParts(
     monthIndex: number,
     day: number,
     endOfDay = false,
-    utcOffset = 0,
 ): string | null {
     const localCheck = new Date(year, monthIndex, day)
 
@@ -38,8 +37,6 @@ function unixSecondsFromDateParts(
         return null
     }
 
-    // Для текстовых дат собираем дату как UTC.
-    // Это исправляет старый сдвиг, где 01.07 уходило как 30.06 19:00 UTC.
     const apiMs = Date.UTC(
         year,
         monthIndex,
@@ -52,32 +49,53 @@ function unixSecondsFromDateParts(
 
     return clampUnixSeconds(apiMs / 1000)
 }
-
-function toApiDate(value: unknown, endOfDay = false, utcOffset = 0): string | null {
+function toApiDate(value: unknown, endOfDay = false): string | null {
     if (value === null || value === undefined || value === "") return null
 
     if (typeof value === "number") {
-        const offsetMs = Number(utcOffset || 0) * 60 * 60 * 1000
-
         if (value < 100000000000) {
-            return clampUnixSeconds(value + offsetMs / 1000)
+            return clampUnixSeconds(value)
         }
 
-        return clampUnixSeconds((value + offsetMs) / 1000)
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return null
+
+        const apiMs = Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            endOfDay ? 23 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 999 : 0,
+        )
+
+        return clampUnixSeconds(apiMs / 1000)
     }
 
     const raw = String(value).trim()
     if (/^\d+$/.test(raw)) {
-        const offsetMs = Number(utcOffset || 0) * 60 * 60 * 1000
-
         if (raw.length <= 10) {
-            return clampUnixSeconds(Number(raw) + offsetMs / 1000)
+            return clampUnixSeconds(Number(raw))
         }
 
         const numeric = Number(raw)
         if (!Number.isFinite(numeric)) return null
 
-        return clampUnixSeconds((numeric + offsetMs) / 1000)
+        const date = new Date(numeric)
+        if (Number.isNaN(date.getTime())) return null
+
+        const apiMs = Date.UTC(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            endOfDay ? 23 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 999 : 0,
+        )
+
+        return clampUnixSeconds(apiMs / 1000)
     }
 
     const normalized = raw.replace(/[\/\-]/g, ".").replace(/T/g, " ")
@@ -91,7 +109,7 @@ function toApiDate(value: unknown, endOfDay = false, utcOffset = 0): string | nu
     const month = Number(match[2]) - 1
     const day = apiMatch ? Number(match[3]) : Number(match[1])
 
-    return unixSecondsFromDateParts(year, month, day, endOfDay, utcOffset)
+    return unixSecondsFromDateParts(year, month, day, endOfDay)
 }
 
 function isEmptyFilterValue(value: unknown): boolean {
@@ -120,6 +138,7 @@ function buildQuery(params: Record<string, unknown>): string {
 }
 
 const infoFilterKeys = API_INFO_FILTER_KEYS
+
 
 function normalizeInfoFilter(filter: filterInterface): Record<string, unknown> {
     const result: Record<string, unknown> = {}
@@ -207,8 +226,8 @@ export async function downloadMonitoringData({
         const query = buildQuery({
             page,
             page_size: pageSize,
-            date_from: toApiDate(filter.date_from, false, filter.api_utc_offset),
-            date_to: toApiDate(filter.date_to, true, filter.api_utc_offset),
+            date_from: toApiDate(filter.date_from, false),
+            date_to: toApiDate(filter.date_to, true),
             ...normalizeInfoFilter(filter),
             sort_by: "id",
             order: "desc",
