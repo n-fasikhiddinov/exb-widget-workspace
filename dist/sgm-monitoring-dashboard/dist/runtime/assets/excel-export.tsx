@@ -48,6 +48,7 @@ function unixSecondsFromDateParts(
     monthIndex: number,
     day: number,
     endOfDay = false,
+    utcOffset = 0,
 ): string | null {
     const localCheck = new Date(year, monthIndex, day)
 
@@ -60,6 +61,8 @@ function unixSecondsFromDateParts(
         return null
     }
 
+    // Для текстовых дат собираем дату как UTC.
+    // Это исправляет старый сдвиг, где 01.07 уходило как 30.06 19:00 UTC.
     const apiMs = Date.UTC(
         year,
         monthIndex,
@@ -72,53 +75,32 @@ function unixSecondsFromDateParts(
 
     return clampUnixSeconds(apiMs / 1000)
 }
-function toUnixSeconds(value: unknown, endOfDay = false): string | null {
+
+function toUnixSeconds(value: unknown, endOfDay = false, utcOffset = 0): string | null {
     if (value === null || value === undefined || value === "") return null
 
     if (typeof value === "number") {
+        const offsetMs = Number(utcOffset || 0) * 60 * 60 * 1000
+
         if (value < 100000000000) {
-            return clampUnixSeconds(value)
+            return clampUnixSeconds(value + offsetMs / 1000)
         }
 
-        const date = new Date(value)
-        if (Number.isNaN(date.getTime())) return null
-
-        const apiMs = Date.UTC(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            endOfDay ? 23 : 0,
-            endOfDay ? 59 : 0,
-            endOfDay ? 59 : 0,
-            endOfDay ? 999 : 0,
-        )
-
-        return clampUnixSeconds(apiMs / 1000)
+        return clampUnixSeconds((value + offsetMs) / 1000)
     }
 
     const raw = String(value).trim()
     if (/^\d+$/.test(raw)) {
+        const offsetMs = Number(utcOffset || 0) * 60 * 60 * 1000
+
         if (raw.length <= 10) {
-            return clampUnixSeconds(Number(raw))
+            return clampUnixSeconds(Number(raw) + offsetMs / 1000)
         }
 
         const numeric = Number(raw)
         if (!Number.isFinite(numeric)) return null
 
-        const date = new Date(numeric)
-        if (Number.isNaN(date.getTime())) return null
-
-        const apiMs = Date.UTC(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            endOfDay ? 23 : 0,
-            endOfDay ? 59 : 0,
-            endOfDay ? 59 : 0,
-            endOfDay ? 999 : 0,
-        )
-
-        return clampUnixSeconds(apiMs / 1000)
+        return clampUnixSeconds((numeric + offsetMs) / 1000)
     }
 
     const normalized = raw.replace(/[\/\-]/g, ".").replace(/T/g, " ")
@@ -132,12 +114,19 @@ function toUnixSeconds(value: unknown, endOfDay = false): string | null {
     const month = Number(match[2]) - 1
     const day = apiMatch ? Number(match[3]) : Number(match[1])
 
-    return unixSecondsFromDateParts(year, month, day, endOfDay)
+    return unixSecondsFromDateParts(year, month, day, endOfDay, utcOffset)
 }
 
 const summaryFilterKeys = API_SUMMARY_FILTER_KEYS
 const infoFilterKeys = API_SUMMARY_FILTER_KEYS
 
+function getInfoUtcOffset(filter?: filterInterface): number {
+    return filter?.api_apply_utc_to_info ? Number(filter?.api_utc_offset || 0) : 0
+}
+
+function getDateUtcOffset(filter: filterInterface | undefined, endpoint: "summary" | "info"): number {
+    return endpoint === "info" ? getInfoUtcOffset(filter) : Number(filter?.api_utc_offset || 0)
+}
 
 function normalizeExportFilter(
     filter?: filterInterface,
@@ -150,13 +139,13 @@ function normalizeExportFilter(
         const value = filter?.[key]
 
         if (key === "date_from") {
-            const dateFrom = toUnixSeconds(value, false)
+            const dateFrom = toUnixSeconds(value, false, getDateUtcOffset(filter, endpoint))
             if (!isEmptyFilterValue(dateFrom)) normalized.date_from = dateFrom
             return
         }
 
         if (key === "date_to") {
-            const dateTo = toUnixSeconds(value, true)
+            const dateTo = toUnixSeconds(value, true, getDateUtcOffset(filter, endpoint))
             if (!isEmptyFilterValue(dateTo)) normalized.date_to = dateTo
             return
         }
@@ -189,8 +178,8 @@ function removeDateFilter(filter: Record<string, unknown>): Record<string, unkno
 function buildSummaryTableUrl(filter: Record<string, unknown> = {}, page: number = 1): string {
     const normalizedFilter: Record<string, unknown> = {
         ...filter,
-        date_from: toUnixSeconds(filter.date_from, false),
-        date_to: toUnixSeconds(filter.date_to, true),
+        date_from: toUnixSeconds(filter.date_from, false, filter.api_utc_offset),
+        date_to: toUnixSeconds(filter.date_to, true, filter.api_utc_offset),
     }
 
     return `${API_BASE_URL}/summary/table?${buildQuery({
