@@ -36,6 +36,17 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 9999px;
+
+  /* Premium Apple 3D Accordion Variables (Light Mode) */
+  --acc-bg-expanded: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+  --acc-bg-collapsed: rgba(255,255,255,0.7);
+  --acc-shadow-expanded: 0 12px 24px -8px rgba(0,0,0,0.1), 0 4px 12px -4px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.02);
+  --acc-shadow-collapsed: 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1);
+  --acc-border: rgba(0,0,0,0.05);
+
+  --acc-inner-bg: #f8fafc;
+  --acc-inner-shadow: inset 0 2px 8px rgba(0,0,0,0.05), 0 1px 0 rgba(255,255,255,1);
+  --acc-inner-border: rgba(0,0,0,0.06);
 }
 
 .dark-theme {
@@ -65,6 +76,17 @@
   --text-main: #FFFFFF;
   --text-muted: #87888b;
   --text-light: #66666e;
+
+  /* Premium Apple 3D Accordion Variables (Dark Mode) */
+  --acc-bg-expanded: linear-gradient(180deg, rgba(35,37,55,0.95) 0%, rgba(25,26,40,0.95) 100%);
+  --acc-bg-collapsed: rgba(30,31,46,0.6);
+  --acc-shadow-expanded: 0 24px 48px -12px rgba(0,0,0,0.6), 0 12px 24px -8px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -1px 1px rgba(0,0,0,0.2);
+  --acc-shadow-collapsed: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.08);
+  --acc-border: rgba(255,255,255,0.08);
+  
+  --acc-inner-bg: rgba(15, 16, 25, 0.5);
+  --acc-inner-shadow: inset 0 4px 12px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05);
+  --acc-inner-border: rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -176,6 +198,14 @@ button {
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid var(--border-glass) !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.05) !important;
+}
+
+.apple-3d-card {
+  border: 1px solid var(--acc-border) !important;
+  /* Убрали backdrop-filter, так как вложенные блюры вызывают сильные лаги при анимации */
+  /* Оптимизируем анимации: анимируем только фон, убираем дорогую анимацию box-shadow */
+  transition: background 0.3s ease, border-color 0.3s ease;
+  will-change: transform, height;
 }
 
 .kpi-card {
@@ -1544,4 +1574,101 @@ button {
   }
 }
 
+/* ========================================================= */
+/* MAGIC UI / SHADCN AESTHETICS (PREMIUM EFFECTS)
+/* ========================================================= */
 
+/* 1. Hover Lift (Smooth levitation) */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease !important;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.dark-theme .hover-lift:hover {
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2) !important;
+}
+
+/* 2. Magic Glow (Animated pulsating border/shadow) */
+@keyframes magicGlowLight {
+  0% { box-shadow: 0 0 0 0px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.4); border-color: rgba(29, 80, 250, 0.3); }
+  50% { box-shadow: 0 0 15px 2px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.4); border-color: rgba(29, 80, 250, 0.6); }
+  100% { box-shadow: 0 0 0 0px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.4); border-color: rgba(29, 80, 250, 0.3); }
+}
+
+@keyframes magicGlowDark {
+  0% { box-shadow: 0 0 0 0px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.1); border-color: rgba(29, 80, 250, 0.3); }
+  50% { box-shadow: 0 0 20px 4px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.1); border-color: rgba(29, 80, 250, 0.8); }
+  100% { box-shadow: 0 0 0 0px var(--color-info-light), inset 0 1px 2px rgba(255,255,255,0.1); border-color: rgba(29, 80, 250, 0.3); }
+}
+
+.magic-glow {
+  animation: magicGlowLight 3s infinite ease-in-out;
+  position: relative;
+  overflow: hidden;
+  will-change: box-shadow;
+}
+
+.dark-theme .magic-glow {
+  animation: magicGlowDark 3s infinite ease-in-out;
+}
+
+.magic-glow::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: skewX(-20deg);
+  animation: shine 4s infinite;
+  pointer-events: none;
+}
+
+.dark-theme .magic-glow::after {
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
+}
+
+@keyframes shine {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}
+
+/* 3. Staggered Reveal (Awwwards style list animation) */
+@keyframes staggerEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.stagger-enter {
+  animation: staggerEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+.stagger-delay-1 { animation-delay: 0.1s; }
+.stagger-delay-2 { animation-delay: 0.2s; }
+.stagger-delay-3 { animation-delay: 0.3s; }
+.stagger-delay-4 { animation-delay: 0.4s; }
+.stagger-delay-5 { animation-delay: 0.5s; }
+
+/* 4. Shimmer Skeleton (Premium loading state) */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton.shimmer-skeleton {
+  background: linear-gradient(90deg, var(--color-neutral-light) 25%, var(--border-glass) 50%, var(--color-neutral-light) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+  border: 1px solid var(--border-glass);
+  will-change: background-position;
+}
+
+/* 5. Animated Beam */
+.animated-beam { animation: gradient-move 2s linear infinite; will-change: background-position; }
+@keyframes gradient-move { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
