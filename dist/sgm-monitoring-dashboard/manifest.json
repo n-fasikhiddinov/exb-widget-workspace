@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "sgm-monitoring-dashboard",
+  "label": "SGM Monitoring Dashboard",
+  "type": "widget",
+  "icon": "icon.svg",
+  "description": "Reusable dashboard template for Experience Builder.",
+  "version": "1.0.0",
+  "author": "Fasihitdinov Niyoziddin",
+  "exbVersion": "1.18.0",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "defaultSize": {
+    "width": 1200,
+    "height": 800
+  },
+  "properties": {
+    "supportAutoSize": true,
+    "supportRepeat": false,
+    "showDescription": true
+  }
+}
