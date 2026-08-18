@@ -12,6 +12,12 @@
     "hoverHighlight": true,
     "expandOnHover": true,
     "transitionMs": 400,
+    "access": {
+        "fullAccessGroups": [],
+        "rules": [],
+        "fullAccessUsers": [],
+        "userRules": []
+    },
     "buttonStyle": {
         "backgroundColor": "#dcded3",
         "textColor": "#191f16",
