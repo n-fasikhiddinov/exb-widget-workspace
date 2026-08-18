@@ -1,0 +1,31 @@
+{
+    "portals": [],
+    "activePortalId": "",
+    "placement": "top-center",
+    "direction": "horizontal",
+    "offsetX": 12,
+    "offsetY": 12,
+    "showInitially": true,
+    "autoHide": true,
+    "idleSeconds": 5,
+    "showHiddenHint": true,
+    "hoverHighlight": true,
+    "expandOnHover": true,
+    "transitionMs": 400,
+    "buttonStyle": {
+        "backgroundColor": "#dcded3",
+        "textColor": "#191f16",
+        "borderColor": "#dcded3",
+        "buttonWidth": 60,
+        "buttonHeight": 60,
+        "iconSize": 30,
+        "activePaddingX": 20,
+        "fontSize": 18,
+        "fontFamily": "Montserrat, Arial, sans-serif",
+        "fontWeight": 700,
+        "borderWidth": 0,
+        "borderRadius": 20,
+        "gap": 5,
+        "shadow": true
+    }
+}
