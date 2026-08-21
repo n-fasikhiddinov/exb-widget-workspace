@@ -5,9 +5,9 @@
   "type": "widget",
   "icon": "icon.svg",
   "description": "Clean Air portal",
-  "version": "1.18.0",
+  "version": "1.14.0",
   "author": "Fasihitdinov Niyoziddin",
-  "exbVersion": "1.18.0",
+  "exbVersion": "1.14.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
   "dependency": [
     "jimu-arcgis"
