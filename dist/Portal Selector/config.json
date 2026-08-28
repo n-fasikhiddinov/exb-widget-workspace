@@ -6,6 +6,7 @@
     "offsetX": 12,
     "offsetY": 12,
     "showInitially": true,
+    "alwaysOpen": false,
     "autoHide": true,
     "idleSeconds": 5,
     "showHiddenHint": true,
