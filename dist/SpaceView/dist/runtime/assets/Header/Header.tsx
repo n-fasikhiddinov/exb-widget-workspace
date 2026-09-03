@@ -156,7 +156,7 @@ export default function Header({ setUrl, onChange, getTheme, setTheme, getLang, 
     const [showSuggestions, setShowSuggestions] = React.useState(false)
     const searchInputRef = React.useRef<HTMLInputElement | null>(null)
 
-    const [getSelectedYear, setSelectedYear] = React.useState<string>("2026-1")
+    const [getSelectedYear, setSelectedYear] = React.useState<string>("2026-2")
 
     const updateType = (type: string, data: any) => {
         if (type === "address" && data) {

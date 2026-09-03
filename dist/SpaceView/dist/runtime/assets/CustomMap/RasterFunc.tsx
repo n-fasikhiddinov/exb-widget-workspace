@@ -4,7 +4,6 @@ import MosaicRule from "@arcgis/core/layers/support/MosaicRule"
 import esriRequest from "@arcgis/core/request"
 import type Extent from "@arcgis/core/geometry/Extent"
 import type Polygon from "@arcgis/core/geometry/Polygon"
-import * as geometryEngine from "@arcgis/core/geometry/geometryEngine"
 import * as projection from "@arcgis/core/geometry/projection"
 
 import { appendArcgisToken, ensureSgmRasterAuth } from "../../sgmAuth"
@@ -85,10 +84,15 @@ async function getRasterThumbnail(imageLayer: ImageryLayer, extent: Extent, id: 
     })
 
     try {
-        const image = await imageLayer.fetchImage(extent, THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
-            format: "png",
-            mosaicRule: lockRule,
-        })
+        const image = await imageLayer.fetchImage(
+            extent,
+            THUMBNAIL_SIZE,
+            THUMBNAIL_SIZE,
+            {
+                format: "png",
+                mosaicRule: lockRule,
+            }
+        )
         const dataUrl = await rasterImageToDataUrl(image)
         if (dataUrl) return dataUrl
     } catch (err) {
@@ -106,7 +110,7 @@ async function getRasterThumbnail(imageLayer: ImageryLayer, extent: Extent, id: 
         mosaicRule: JSON.stringify({
             mosaicMethod: "esriMosaicLockRaster",
             lockRasterIds: [id],
-        }),
+        })
     }
 
     try {
@@ -120,23 +124,6 @@ async function getRasterThumbnail(imageLayer: ImageryLayer, extent: Extent, id: 
         console.warn("exportImage thumbnail failed for OBJECTID:", id, err)
         return null
     }
-}
-
-function getDisplayGeometry(rasterGeom: any, areaGeom: any): Polygon | null {
-    if (!rasterGeom) return null
-
-    if (areaGeom?.type === "polygon" && rasterGeom.type === "polygon") {
-        try {
-            const intersection = geometryEngine.intersect(rasterGeom as Polygon, areaGeom as Polygon)
-            if (intersection?.type === "polygon") {
-                return intersection as Polygon
-            }
-        } catch {
-            // fallback to raster geometry
-        }
-    }
-
-    return rasterGeom.type === "polygon" ? rasterGeom as Polygon : null
 }
 
 function getOuterRing(polygon: Polygon | null, extent: Extent): number[][] {
@@ -220,8 +207,10 @@ export async function collectRastersFromMosaic({
             const geom = f.geometry;
             if (!geom || !geom.extent) continue;
 
-            const displayPolygon = getDisplayGeometry(geom, graphic.geometry)
-            const sourceExtent = displayPolygon?.extent ?? geom.extent
+            // The drawn polygon is only a spatial filter. Keep the complete
+            // source footprint so the raster is displayed and zoomed to whole.
+            const displayPolygon = geom.type === "polygon" ? geom as Polygon : null
+            const sourceExtent = geom.extent
             const extent = await normalizeExtent(sourceExtent);
             if (!extent) continue;
 

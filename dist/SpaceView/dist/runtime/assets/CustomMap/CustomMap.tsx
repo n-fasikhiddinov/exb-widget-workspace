@@ -10,9 +10,7 @@ import Graphic from "@arcgis/core/Graphic"
 import ImageryLayer from "@arcgis/core/layers/ImageryLayer"
 import { Extent } from "@arcgis/core/geometry"
 import MosaicRule from "@arcgis/core/layers/support/MosaicRule"
-import RasterFunction from "@arcgis/core/layers/support/RasterFunction"
 import * as geometryEngine from "@arcgis/core/geometry/geometryEngine"
-import * as projection from "@arcgis/core/geometry/projection"
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils"
 import Point from "@arcgis/core/geometry/Point"
 import Polygon from "@arcgis/core/geometry/Polygon"
@@ -135,42 +133,6 @@ export default function CustomMap({
         }, 300)
     }, [])
 
-    const projectGeometryToLayer = React.useCallback(async (
-        layer: ImageryLayer,
-        geometry: Polygon
-    ): Promise<Polygon> => {
-        await layer.load()
-        const targetSr = layer.spatialReference
-        if (!targetSr || geometry.spatialReference?.wkid === targetSr.wkid) {
-            return geometry
-        }
-        if (!projection.isLoaded()) {
-            await projection.load()
-        }
-        try {
-            return projection.project(geometry, targetSr) as Polygon
-        } catch {
-            return geometry
-        }
-    }, [])
-
-    const getVisibleAreaGeometry = React.useCallback((): Polygon | null => {
-        const polygons = (importantAreas.current?.graphics.toArray() ?? [])
-            .filter((g) => g.visible)
-            .map((g) => g.geometry)
-            .filter((g): g is Polygon => g?.type === "polygon")
-
-        if (!polygons.length) return null
-        if (polygons.length === 1) return polygons[0]
-
-        try {
-            const united = geometryEngine.union(polygons)
-            return united?.type === "polygon" ? united as Polygon : polygons[0]
-        } catch {
-            return polygons[0]
-        }
-    }, [])
-
     const waitForRasterDisplay = React.useCallback(async (
         mapView: MapView,
         layer: ImageryLayer,
@@ -209,7 +171,6 @@ export default function CustomMap({
 
         if (visibleIDs.length === 0) {
             layer.mosaicRule = new MosaicRule({ method: "attribute", where: "1=0" })
-            layer.rasterFunction = null
             layer.visible = false
             setRasterLoading(false)
             return
@@ -221,25 +182,10 @@ export default function CustomMap({
             await layer.load()
             if (loadToken !== rasterLoadTokenRef.current) return
 
-            const clipGeometry = getVisibleAreaGeometry()
-            let clipFunction: RasterFunction | null = null
-
-            if (clipGeometry) {
-                const projectedClip = await projectGeometryToLayer(layer, clipGeometry)
-                clipFunction = new RasterFunction({
-                    functionName: "Clip",
-                    functionArguments: {
-                        clippingGeometry: projectedClip,
-                        clippingType: "inside",
-                    },
-                })
-            }
-
             layer.mosaicRule = new MosaicRule({
                 method: "lock-raster",
                 lockRasterIds: visibleIDs,
             })
-            layer.rasterFunction = clipFunction
             layer.visible = true
 
             if (mapView) {
@@ -252,7 +198,7 @@ export default function CustomMap({
                 setRasterLoading(false)
             }
         }
-    }, [getVisibleAreaGeometry, projectGeometryToLayer, view, waitForRasterDisplay])
+    }, [view, waitForRasterDisplay])
 
     // ─── Смена URL ────────────────────────────────────────────────────────────
     React.useEffect(() => {
@@ -267,10 +213,14 @@ export default function CustomMap({
         if (OverlayLayer.current) { map.remove(OverlayLayer.current); OverlayLayer.current.destroy() }
 
         const newMosaic = new ImageryLayer(getImageryLayerOptions(getUrl, {
-            mosaicRule: new MosaicRule({ method: "attribute", where: whereRef.current || "1=0" })
+            mosaicRule: new MosaicRule({ method: "attribute", where: whereRef.current || "1=0" }),
+            
         }) as __esri.ImageryLayerProperties)
         // Восстанавливаем видимость
-        const newOverlay = new ImageryLayer(getImageryLayerOptions(getUrl, { visible: wasVisible }) as __esri.ImageryLayerProperties)
+        const newOverlay = new ImageryLayer(getImageryLayerOptions(getUrl, {
+            visible: wasVisible,
+            
+        }) as __esri.ImageryLayerProperties)
 
         mosaicLayers.current = newMosaic
         OverlayLayer.current = newOverlay
@@ -437,25 +387,12 @@ export default function CustomMap({
                             row.visible = i === getListAction.index
                         })
 
-                        const clipGeometry = getVisibleAreaGeometry()
                         const rasterFootprint = new Polygon({
                             rings: item.rings ?? [item.ring],
                             spatialReference: item.spatialReference,
                         })
 
-                        let focusGeometry: Polygon = rasterFootprint
-                        if (clipGeometry) {
-                            try {
-                                const clipped = geometryEngine.intersect(clipGeometry, rasterFootprint)
-                                if (clipped?.type === "polygon") {
-                                    focusGeometry = clipped as Polygon
-                                } else if (clipped?.extent) {
-                                    focusGeometry = clipGeometry
-                                }
-                            } catch {
-                                focusGeometry = clipGeometry
-                            }
-                        }
+                        const focusGeometry: Polygon = rasterFootprint
 
                         graphic.geometry = focusGeometry
                         graphic.symbol = polygonHoverSymbol.current
@@ -533,9 +470,13 @@ export default function CustomMap({
         })
 
         mosaicLayers.current = new ImageryLayer(getImageryLayerOptions(getUrl, {
-            mosaicRule: new MosaicRule({ method: "attribute", where: "1=0" })
+            mosaicRule: new MosaicRule({ method: "attribute", where: "1=0" }),
+            
         }) as __esri.ImageryLayerProperties)
-        OverlayLayer.current = new ImageryLayer(getImageryLayerOptions(getUrl, { visible: false }) as __esri.ImageryLayerProperties)
+        OverlayLayer.current = new ImageryLayer(getImageryLayerOptions(getUrl, {
+            visible: false,
+            
+        }) as __esri.ImageryLayerProperties)
 
         importantAreas.current = new GraphicsLayer({ id: "ImportantAreas" })
         rasterPolygon.current = new GraphicsLayer({ id: "rasterPolygon" })
