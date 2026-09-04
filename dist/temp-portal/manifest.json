@@ -5,7 +5,7 @@
   "type": "widget",
   "icon": "icon.svg",
   "description": "Temporary full-screen map portal based on the dashboard template.",
-  "version": "1.10.2",
+  "version": "1.12.5",
   "author": "Fasihitdinov Niyoziddin",
   "exbVersion": "1.18.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
