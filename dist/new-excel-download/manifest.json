@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "new-excel-download",
+  "label": "new-excel-download",
+  "type": "widget",
+  "description": "Configurable Excel export with Portal access rules and column management.",
+  "version": "1.18.0",
+  "author": "Neon Dream",
+  "exbVersion": "1.18.0",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {
+    "useDataSources": true
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 200,
+    "height": 100
+  }
+}
