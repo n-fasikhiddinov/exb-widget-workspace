@@ -1,0 +1,24 @@
+{
+  "manifest_version": 2,
+  "name": "temp-portal",
+  "label": "temp-portal",
+  "type": "widget",
+  "icon": "icon.svg",
+  "description": "Temporary full-screen map portal based on the dashboard template.",
+  "version": "1.13.1",
+  "author": "Fasihitdinov Niyoziddin",
+  "exbVersion": "1.18.0",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 1200,
+    "height": 800
+  },
+  "properties": {
+    "supportAutoSize": true,
+    "supportRepeat": false,
+    "showDescription": true
+  }
+}
