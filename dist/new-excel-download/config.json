@@ -1,0 +1,13 @@
+{
+    "color": "#00ff37ff",
+    "buttonName": "Download",
+    "fileName": "Excel",
+    "fileFormat": "xlsx",
+    "fields": [],
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "fullAccessUsers": [],
+        "rules": [],
+        "fieldJoinOperator": "and"
+    }
+}
