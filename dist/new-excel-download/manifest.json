@@ -4,7 +4,7 @@
   "label": "new-excel-download",
   "type": "widget",
   "description": "Configurable Excel export with Portal access rules and column management.",
-  "version": "1.25.2",
+  "version": "1.26.0",
   "author": "Neon Dream",
   "exbVersion": "1.18.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
