@@ -10,9 +10,6 @@ export const exportHandler = async (props: {
 	km: boolean
 }) => {
 	const date = new Date()
-	let isExtended = true
-	let heightCount = 0
-	let widthCount = 0
 
 	function NumsFormat(num: any) {
 		return Math.round(Number(num || 0) * 100) / 100
@@ -32,6 +29,14 @@ export const exportHandler = async (props: {
 	function addMetric(target: any, source: any) {
 		target.count += Number(source?.count || 0)
 		target.sum += Number(source?.sum || 0)
+	}
+
+	function addValuesToTotals(target: any[][], values: any[][]) {
+		values.forEach((typeItem: any[], typeIndex: number) => {
+			typeItem.forEach((metric: any, metricIndex: number) => {
+				addMetric(target[typeIndex][metricIndex], metric)
+			})
+		})
 	}
 
 	function countAll(value: any[]) {
@@ -150,18 +155,23 @@ export const exportHandler = async (props: {
 	let indexPos = 2
 	let namesPos = 1
 	const metricsPerType = 10
+	const lastColumn = xCellPos + (uType.length - 1) * metricsPerType
 
 	if (!props.km) {
 		const yearKeys = Object.keys(props.data).sort((a, b) => Number(a) - Number(b))
 		const latestYear = yearKeys[yearKeys.length - 1]
 		props.data = latestYear ? { [latestYear]: props.data[latestYear] } : {}
 	}
+	const yearKeys = Object.keys(props.data).sort((a, b) => Number(a) - Number(b))
+	const yearTitle = yearKeys.length > 1
+		? `${yearKeys[0]}–${yearKeys[yearKeys.length - 1]}-йилларда`
+		: `${yearKeys[0] || date.getFullYear()}-йилда`
 
 	// -----------------  Header -------------------------
 	sheet.row(yCellPos).height(60)
-	sheet.range(2, 2, yCellPos, xCellPos + (uType.length - 1) * metricsPerType)
+	sheet.range(2, 2, yCellPos, lastColumn)
 		.merged(true)
-		.value(`2025-йилда аниқланган майдонларнинг жойга чиқиб ўтказилган мониторинг хулосалари бўйича таҳлили (${date.toLocaleDateString()} ҳолатига кўра)`)
+		.value(`${yearTitle} аниқланган майдонларнинг жойга чиқиб ўтказилган мониторинг хулосалари бўйича таҳлили (${date.toLocaleDateString()} ҳолатига кўра)`)
 		.style({
 			bold: true,
 			fontSize: 16,
@@ -257,100 +267,121 @@ export const exportHandler = async (props: {
 	sheet.freezePanes(0, headerMetricRow)
 	yCellPos = headerMetricRow + 1
 
-	Object.keys(props.data).forEach((yearKey: string) => {
-		const yearTotals = createTypeTotals()
-		const namesForYear = Object.keys(props.data[yearKey])
+	sheet.column(xCellPos - namesPos).width(45)
+	sheet.column(xCellPos - indexPos).width(10)
+	for (let column = xCellPos + 1; column <= lastColumn; column++) {
+		sheet.column(column).width(15)
+	}
 
-		namesForYear.forEach((nameKey: string, nameIndex: number) => {
-			if (isExtended) {
-				sheet.column(xCellPos - namesPos).width(45)
-				sheet.column(xCellPos - indexPos).width(10)
-			}
-
-			sheet.cell(yCellPos + nameIndex, xCellPos - namesPos)
-				.value(nameKey)
-				.style({
-					...valueStyle,
-					horizontalAlignment: "left",
-					fill: colors[0]
-				})
-			sheet.cell(yCellPos + nameIndex, xCellPos - indexPos)
-				.value(nameIndex + 1)
-				.style({
-					...valueStyle,
-					fill: colors[0]
-				})
-
-			sheet.row(yCellPos + nameIndex).height(25)
-
-			props.data[yearKey][nameKey].forEach((typeItem: any[], typeIndex: number) => {
-				if (typeIndex === 0) {
-					putValue(xCellPos + typeIndex, yCellPos + nameIndex, typeItem[0].sum, colors[0])
-					addMetric(yearTotals[typeIndex][0], typeItem[0])
-					widthCount += isExtended ? 1 : 0
-				}
-				else if (typeIndex === 1) {
-					fillValueSum(xCellPos + typeIndex, yCellPos + nameIndex, typeItem)
-
-					typeItem.forEach((metric: any, metricIndex: number) => {
-						addMetric(yearTotals[typeIndex][metricIndex], metric)
-					})
-					widthCount += isExtended ? 10 : 0
-				}
-				else {
-					fillValueSum(xCellPos + 1 + (typeIndex - 1) * metricsPerType, yCellPos + nameIndex, typeItem)
-
-					typeItem.forEach((metric: any, metricIndex: number) => {
-						addMetric(yearTotals[typeIndex][metricIndex], metric)
-					})
-					widthCount += isExtended ? metricsPerType : 0
-				}
-			})
-
-			isExtended = false
-			heightCount += 1
-		})
-
-		const totalRow = yCellPos + heightCount
-		const percentRow = totalRow + 1
+	function fillTotalsRows(label: string, percentLabel: string, totals: any[][], fill = colors[0]) {
+		const totalRow = yCellPos
+		const percentRow = yCellPos + 1
 
 		sheet.row(totalRow).height(25)
-
+		sheet.row(percentRow).height(25)
 		sheet.range(totalRow, xCellPos - indexPos, totalRow, xCellPos - namesPos)
 			.merged(true)
-			.value(`Жами${props.km ? ' ' + yearKey : ''}:`)
-			.style({
-				...valueStyle,
-				fill: colors[0]
-			})
+			.value(label)
+			.style({ ...valueStyle, fill })
 		sheet.range(percentRow, xCellPos - indexPos, percentRow, xCellPos - namesPos)
 			.merged(true)
-			.value(`Жами%${props.km ? ' ' + yearKey : ''}:`)
-			.style({
-				...valueStyle,
-				fill: colors[0]
-			})
+			.value(percentLabel)
+			.style({ ...valueStyle, fill })
 
-		for (let i = 0; i < widthCount; i++) {
-			sheet.column(xCellPos + i + (namesPos !== 0 ? namesPos : 1)).width(15)
-		}
-
-		putValue(xCellPos, totalRow, yearTotals[0][0].sum, colors[0])
-		putValue(xCellPos, percentRow, yearTotals[0][0].sum ? 100 : 0, colors[0])
-
-		fillValueSum(xCellPos + 1, totalRow, yearTotals[1])
-		fillPercentSum(xCellPos + 1, percentRow, yearTotals[1])
+		putValue(xCellPos, totalRow, totals[0][0].sum, fill)
+		putValue(xCellPos, percentRow, totals[0][0].sum ? 100 : 0, fill)
+		fillValueSum(xCellPos + 1, totalRow, totals[1])
+		fillPercentSum(xCellPos + 1, percentRow, totals[1])
 
 		for (let typeIndex = 2; typeIndex < uType.length; typeIndex++) {
 			const column = xCellPos + 1 + (typeIndex - 1) * metricsPerType
-			fillValueSum(column, totalRow, yearTotals[typeIndex])
-			fillPercentSum(column, percentRow, yearTotals[typeIndex])
+			fillValueSum(column, totalRow, totals[typeIndex])
+			fillPercentSum(column, percentRow, totals[typeIndex])
 		}
 
-		isExtended = false
-		yCellPos += heightCount + 3
-		heightCount = 0
+		yCellPos += 2
+	}
+
+	const allYearsTotals = createTypeTotals()
+
+	yearKeys.forEach((yearKey: string) => {
+		const yearTotals = createTypeTotals()
+		const monitoringKeys = Object.keys(props.data[yearKey]).sort((a, b) => a.localeCompare(b))
+
+		monitoringKeys.forEach((monitoringKey: string, monitoringIndex: number) => {
+			const monitoringTotals = createTypeTotals()
+			const monitoringData = props.data[yearKey][monitoringKey]
+			const regionNames = Object.keys(monitoringData).sort((a, b) => a.localeCompare(b))
+
+			sheet.range(yCellPos, xCellPos - indexPos, yCellPos, lastColumn)
+				.merged(true)
+				.value(`Мониторинг: ${monitoringKey}`)
+				.style({
+					...valueStyle,
+					fontSize: 13,
+					horizontalAlignment: "left",
+					fill: "E7E6E6"
+				})
+			sheet.row(yCellPos).height(26)
+			yCellPos += 1
+
+			regionNames.forEach((nameKey: string, nameIndex: number) => {
+				const region = monitoringData[nameKey]
+				const values = region.values
+
+				sheet.cell(yCellPos, xCellPos - namesPos)
+					.value(nameKey)
+					.style({ ...valueStyle, horizontalAlignment: "left", fill: colors[0] })
+				sheet.cell(yCellPos, xCellPos - indexPos)
+					.value(nameIndex + 1)
+					.style({ ...valueStyle, fill: colors[0] })
+				sheet.row(yCellPos).height(25)
+
+				values.forEach((typeItem: any[], typeIndex: number) => {
+					if (typeIndex === 0) {
+						putValue(xCellPos, yCellPos, typeItem[0].sum, colors[0])
+					} else if (typeIndex === 1) {
+						fillValueSum(xCellPos + 1, yCellPos, typeItem)
+					} else {
+						fillValueSum(xCellPos + 1 + (typeIndex - 1) * metricsPerType, yCellPos, typeItem)
+					}
+				})
+
+				addValuesToTotals(monitoringTotals, values)
+				addValuesToTotals(yearTotals, values)
+				addValuesToTotals(allYearsTotals, values)
+				yCellPos += 1
+			})
+
+			fillTotalsRows(
+				`Жами ${monitoringKey}${props.km ? ' ' + yearKey : ''}:`,
+				`Жами% ${monitoringKey}${props.km ? ' ' + yearKey : ''}:`,
+				monitoringTotals
+			)
+			if (monitoringIndex === monitoringKeys.length - 1 && monitoringKeys.length === 1) {
+				yCellPos += 1
+			}
+		})
+
+		if (monitoringKeys.length > 1) {
+			fillTotalsRows(
+				`Умумий жами${props.km ? ' ' + yearKey : ''}:`,
+				`Умумий жами%${props.km ? ' ' + yearKey : ''}:`,
+				yearTotals,
+				"D9EAD3"
+			)
+			yCellPos += 1
+		}
 	})
+
+	if (props.km && yearKeys.length > 1) {
+		fillTotalsRows(
+			"Барча йиллар бўйича умумий жами:",
+			"Барча йиллар бўйича умумий жами%:",
+			allYearsTotals,
+			"BDD7EE"
+		)
+	}
 
 	const blob = await workbook.outputAsync()
 	downloadFile(blob, `Ecologiya ${props.name}.xlsx`)
