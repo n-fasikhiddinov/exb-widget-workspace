@@ -5,7 +5,7 @@
   "type": "widget",
   "icon": "icon.svg",
   "description": "Aral Sea region environmental monitoring portal.",
-  "version": "1.29.0",
+  "version": "1.29.1",
   "author": "Fasihitdinov Niyoziddin",
   "exbVersion": "1.18.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
