@@ -3,6 +3,12 @@
         "fullAccessGroups": [],
         "fullAccessUsers": [],
         "rules": [],
-        "fieldJoinOperator": "and"
+        "fieldJoinOperator": "and",
+        "popupFieldAccess": {
+            "enabled": false,
+            "field": "act",
+            "groups": [],
+            "users": []
+        }
     }
 }
