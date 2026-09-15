@@ -6,6 +6,7 @@
         "fieldJoinOperator": "and",
         "popupFieldAccess": {
             "enabled": false,
+            "inverted": false,
             "field": "act",
             "groups": [],
             "users": []
