@@ -1,0 +1,15 @@
+{
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "fullAccessUsers": [],
+        "rules": [],
+        "fieldJoinOperator": "and",
+        "popupFieldAccess": {
+            "enabled": false,
+            "inverted": false,
+            "field": "evidence_files",
+            "groups": [],
+            "users": []
+        }
+    }
+}
