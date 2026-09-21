@@ -76,7 +76,7 @@ export default function BottomArea(props: bottomArea) {
         });
 
         return () => {
-            stationaryHandler.remove();
+            stationaryHandler?.remove?.();
         };
     }, [mapView, onChange]);
 

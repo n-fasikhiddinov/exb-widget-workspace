@@ -574,14 +574,14 @@ export default function CustomMap({
             constraints: { minZoom: 3, maxZoom: 20, snapToZoom: false },
             ui: { components: ['attribution'] }, popupEnabled: false
         })
-        mosaicLayers.current = new ImageryLayer(getImageryLayerOptions(getUrl, {
+        mosaicLayers.current = getUrl ? new ImageryLayer(getImageryLayerOptions(getUrl, {
             mosaicRule: new MosaicRule({ method: 'attribute', where: '1=0' }), popupEnabled: false
-        }) as __esri.ImageryLayerProperties)
-        OverlayLayer.current = new ImageryLayer(getImageryLayerOptions(getUrl, {
+        }) as __esri.ImageryLayerProperties) : null
+        OverlayLayer.current = getUrl ? new ImageryLayer(getImageryLayerOptions(getUrl, {
             visible: true, popupEnabled: false
-        }) as __esri.ImageryLayerProperties)
+        }) as __esri.ImageryLayerProperties) : null
         overlayVisibleRef.current = true
-        baseGroup.current = new GroupLayer({ id: 'sv-imagery', layers: [OverlayLayer.current, mosaicLayers.current] })
+        baseGroup.current = new GroupLayer({ id: 'sv-imagery', layers: [OverlayLayer.current, mosaicLayers.current].filter(Boolean) as __esri.Layer[] })
         importantAreas.current = new GraphicsLayer({ id: 'ImportantAreas' })
         rasterPolygon.current = new GraphicsLayer({ id: 'rasterPolygon' })
         rasterPolygon.current.addMany([0, 1].map(() => new Graphic({
@@ -589,18 +589,22 @@ export default function CustomMap({
         })))
         map.addMany([baseGroup.current, importantAreas.current, rasterPolygon.current])
         setView(mapView)
-        const initialRasterLoadToken = ++rasterLoadTokenRef.current
-        setRasterLoading(true)
-        void (async () => {
-            try {
-                await OverlayLayer.current?.load()
-                if (OverlayLayer.current) await waitForRasterDisplay(mapView, OverlayLayer.current, initialRasterLoadToken)
-            } catch (err) {
-                console.warn('Failed to load initial raster base:', err)
-            } finally {
-                if (initialRasterLoadToken === rasterLoadTokenRef.current) setRasterLoading(false)
-            }
-        })()
+        if (OverlayLayer.current) {
+            const initialRasterLoadToken = ++rasterLoadTokenRef.current
+            setRasterLoading(true)
+            void (async () => {
+                try {
+                    await OverlayLayer.current?.load()
+                    if (OverlayLayer.current) await waitForRasterDisplay(mapView, OverlayLayer.current, initialRasterLoadToken)
+                } catch (err) {
+                    console.warn('Failed to load initial raster base:', err)
+                } finally {
+                    if (initialRasterLoadToken === rasterLoadTokenRef.current) setRasterLoading(false)
+                }
+            })()
+        } else {
+            setRasterLoading(false)
+        }
         const move = mapView.on('pointer-move', event => {
             const point = mapView.toMap(event)
             if (!point) return
@@ -611,7 +615,7 @@ export default function CustomMap({
         return () => {
             ++collectSequence.current; ++rasterLoadTokenRef.current
             if (debounceTimer.current) clearTimeout(debounceTimer.current)
-            move.remove(); mapView.destroy(); mapRef.current = null
+            move?.remove?.(); mapView.destroy(); mapRef.current = null
         }
     }, [])
 
@@ -632,6 +636,7 @@ export default function CustomMap({
                 onLayers={(layers, swipe) => { comparison.current = { layers, swipe } }} />}
 
             {catalogError && !clean && <div className="sv-map-status" role="alert">{getLang === 'EN' ? "Unable to load the image catalog." : (getLang === 'RU' ? 'Не удалось получить каталог изображений.' : 'Tasvirlar katalogini yuklab bo‘lmadi.')} <button onClick={() => debouncedCollect(whereRef.current)}>{getLang === 'EN' ? "Retry" : (getLang === 'RU' ? 'Повторить' : 'Qayta urinish')}</button></div>}
+            {!getUrl && !clean && <div className="sv-map-status" role="alert">{getLang === 'EN' ? 'No mosaic layers configured. Import or add ImageServer layers in the widget settings.' : (getLang === 'RU' ? 'Слои мозаики не настроены. Загрузите JSON или добавьте ImageServer-слои в настройках виджета.' : 'Mozaika qatlamlari sozlanmagan. JSON faylini yuklang yoki vidjet sozlamalarida ImageServer qatlamlarini qo‘shing.')}</div>}
             <div ref={mapContainerRef} className="mapCanvas" />
             {rasterLoading && (
                 <div className="mapRasterLoader" aria-busy="true">
@@ -651,7 +656,7 @@ export default function CustomMap({
             {view && (
                 <RightArea
                     clean={clean}
-                    onCompare={() => { setComparing(v => !v); setTool("none") }}
+                    onCompare={() => { if (!getUrl) return; setComparing(v => !v); setTool("none") }}
                     activeTool={tool}
                     comparisonActive={comparing}
                     hasPolygons={geometryList.length > 0}
