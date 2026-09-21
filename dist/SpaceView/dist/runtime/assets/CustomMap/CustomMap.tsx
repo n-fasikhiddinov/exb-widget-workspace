@@ -624,7 +624,7 @@ export default function CustomMap({
     const handleChange = React.useCallback((type: string, index: any) => { setListAction({ type, index }) }, [])
 
     return (
-        <div className={`mapArea ${clean || comparing ? "sv-full-info" : ""}`}>
+        <div className={`mapArea ${clean ? "sv-full-info" : ""}`}>
             <div className="sv-map-actions">
             {view && importantAreas.current && <MapTools view={view} layer={importantAreas.current} tool={tool} clean={clean} lang={getLang}
                 onComplete={() => setTool('edit')} onChanged={syncGeometry} />}

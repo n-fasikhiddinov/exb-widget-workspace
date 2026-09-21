@@ -5,7 +5,7 @@
   "type": "widget",
   "icon": "icon.svg",
   "description": "SpaceView: ArcGIS drawing, raster catalog and period comparison",
-  "version": "2.1.16",
+  "version": "2.1.18",
   "author": "Neon Dream",
   "exbVersion": "1.18.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
