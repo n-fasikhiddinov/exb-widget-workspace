@@ -1,0 +1,210 @@
+.RightArea {
+    position: absolute;
+    top: var(--main-padding);
+    right: var(--main-padding);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 65px;
+    height: Calc(100% - 6 * var(--main-padding));
+    z-index: 2;
+}
+
+.RightBtnArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.RightAreaBtn {
+    width: 45px;
+    height: 45px;
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    cursor: pointer;
+    user-select: none;
+    border: 0;
+    color: rgb(var(--main-second-color-rgb));
+    transition: background .16s ease, color .16s ease, transform .16s ease;
+}
+.RightAreaBtn:hover { background:var(--sv-control-hover-bg); transform:translateY(-1px); }
+.RightAreaBtn[aria-pressed="true"] { background:rgba(var(--main-surface-color-rgb),1); color:rgb(var(--main-activ-color)); }
+
+.RightAreaBtn>img {
+    width: 45%;
+    height: 45%;
+}
+
+/* ===== Обёртка кнопки ===== */
+.layers-wrapper {
+    position: relative;
+}
+
+/* ===== Окно базовых карт ===== */
+.BasemapPopup {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 0;
+
+    width: 300px;
+    padding: 10px;
+
+    background-color: rgba(var(--main-surface-color-rgb), 1);
+    border-radius: var(--main-border-radius);
+
+    z-index: 100;
+}
+
+/* ===== Заголовок ===== */
+.BasemapHeader {
+    margin-bottom: 10px;
+
+    color: rgba(var(--main-second-color-rgb), 1);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 26px;
+    letter-spacing: 2%;
+    vertical-align: bottom;
+}
+
+/* ===== Список базовых карт ===== */
+.BasemapList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+/* ===== Элемент базовой карты ===== */
+.BasemapItem {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent !important;
+
+    color: rgba(var(--main-second-color-rgb), 1);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    letter-spacing: 2%;
+    vertical-align: bottom;
+
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* ===== Hover / active как у dropdown-модалок ===== */
+.BasemapItem:hover:not(.active) {
+    background: var(--sv-control-hover-bg);
+    border-color: var(--sv-control-hover-border) !important;
+}
+
+.BasemapItem.active {
+    background: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.BasemapItem.active:hover {
+    background: #3b82f6;
+    color: #ffffff;
+    border-color: transparent !important;
+}
+
+.BasemapImg {
+    width: 80px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: var(--panel-border-radius);
+    overflow: hidden;
+}
+
+.BasemapImg>img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ===== Kartografik asos ===== */
+.BasemapToggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent !important;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.18s ease, border-color 0.18s ease;
+
+    color: rgba(var(--main-second-color-rgb), 1);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+}
+
+.BasemapToggleRow:hover {
+    background: var(--sv-control-hover-bg);
+    border-color: var(--sv-control-hover-border) !important;
+}
+
+.BasemapToggle {
+    --basemap-toggle-knob-size: 18px;
+    --basemap-toggle-knob-off: 3px;
+
+    position: relative;
+    width: 44px;
+    height: 26px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 999px;
+    border: 2px solid rgba(var(--main-border-color-rgb), 0.65) !important;
+    background: rgba(var(--main-input-bg-rgb), 1);
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.BasemapToggle:hover:not(:disabled) {
+    border-color: var(--sv-control-hover-border) !important;
+}
+
+.BasemapToggleOn {
+    border-color: #3b82f6 !important;
+    background: #3b82f6;
+}
+
+.BasemapToggleKnob {
+    position: absolute;
+    top: 50%;
+    left: var(--basemap-toggle-knob-off);
+    width: var(--basemap-toggle-knob-size);
+    height: var(--basemap-toggle-knob-size);
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(var(--main-shadow-color-rgb), 0.22);
+    transform: translateY(-50%);
+    transition: left 0.18s ease;
+}
+
+.BasemapToggleOn .BasemapToggleKnob {
+    left: calc(100% - var(--basemap-toggle-knob-size) - var(--basemap-toggle-knob-off));
+}
