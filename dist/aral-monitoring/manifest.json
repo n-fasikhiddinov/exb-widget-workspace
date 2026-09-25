@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "aral-monitoring",
+  "label": "Aral Monitoring",
+  "type": "widget",
+  "icon": "icon.svg",
+  "description": "Aral Sea region environmental monitoring portal.",
+  "version": "1.30.6",
+  "author": "Fasihitdinov Niyoziddin",
+  "exbVersion": "1.18.0",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 1200,
+    "height": 800
+  },
+  "properties": {
+    "supportAutoSize": true,
+    "supportRepeat": false,
+    "showDescription": true,
+    "notShareDynamicModules": true
+  }
+}
