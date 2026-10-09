@@ -1,0 +1,92 @@
+.sv-theme-toggle {
+    --theme-toggle-height: var(--header-control-height, 36px);
+    --theme-toggle-padding: 3px;
+    --theme-toggle-thumb-size: calc(var(--theme-toggle-height) - var(--theme-toggle-padding) * 2 - 2px);
+    --theme-toggle-width: calc(var(--theme-toggle-thumb-size) * 2 + var(--theme-toggle-padding) * 2 + 0.5rem);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    width: var(--theme-toggle-width);
+    height: var(--theme-toggle-height);
+    padding: 0 calc(var(--theme-toggle-padding) + 4px);
+    border-radius: 9999px;
+    border-color: rgba(var(--main-border-color-rgb), 1) !important;
+    background: rgba(var(--main-input-bg-rgb), 1);
+    color: rgba(var(--main-muted-color-rgb), 1);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sv-theme-toggle:hover {
+    border-color: rgba(var(--main-muted-color-rgb), 1) !important;
+    background: rgba(var(--main-surface-elevated-rgb), 1);
+}
+
+.sv-theme-toggle:focus-visible {
+    outline: 2px solid #00bbf2 !important;
+    outline-offset: 2px;
+}
+
+.sv-theme-toggle-icon {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    color: rgba(var(--main-muted-color-rgb), 1);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.sv-theme-toggle-dark .sv-theme-toggle-icon-sun,
+.sv-theme-toggle:not(.sv-theme-toggle-dark) .sv-theme-toggle-icon-moon {
+    opacity: 0.35;
+}
+
+.sv-theme-toggle-thumb {
+    position: absolute;
+    top: var(--theme-toggle-padding);
+    left: var(--theme-toggle-padding);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--theme-toggle-thumb-size);
+    height: var(--theme-toggle-thumb-size);
+    border-radius: 9999px;
+    background: #00bbf2;
+    color: #fff;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.sv-theme-toggle-thumb svg {
+    flex-shrink: 0;
+}
+
+.sv-theme-toggle-dark .sv-theme-toggle-thumb {
+    transform: translateX(
+        calc(
+            var(--theme-toggle-width) - var(--theme-toggle-thumb-size) -
+                var(--theme-toggle-padding) * 2
+        )
+    );
+}
+
+@media (max-width: 1440px) {
+    .sv-theme-toggle {
+        --theme-toggle-padding: 2px;
+        padding: 0 calc(var(--theme-toggle-padding) + 3px);
+    }
+
+    .sv-theme-toggle-icon {
+        transform: scale(0.85);
+    }
+
+    .sv-theme-toggle-thumb svg {
+        width: 11px;
+        height: 11px;
+    }
+}
