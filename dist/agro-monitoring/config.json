@@ -1,0 +1,19 @@
+{
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "fullAccessUsers": [],
+        "rules": [],
+        "fieldJoinOperator": "and"
+    },
+    "layerConfigs": {},
+    "layerConfig": {
+        "kind": "auto",
+        "general": { "visible": true, "opacity": 1, "minScale": 0, "maxScale": 0, "refreshInterval": 0, "listMode": "show" },
+        "fields": [],
+        "popup": { "enabled": true, "showAllFields": true },
+        "labels": { "enabled": false, "placement": "center-center", "color": "#ffffff", "size": 12, "haloColor": "#111827", "haloSize": 1, "minScale": 0, "maxScale": 0 },
+        "vector": { "mode": "source", "fillColor": "#22c55e", "outlineColor": "#ffffff", "outlineWidth": 1, "size": 8, "colorStops": [{ "value": 0, "color": "#ef4444" }, { "value": 50, "color": "#facc15" }, { "value": 100, "color": "#16a34a" }], "uniqueValues": [] },
+        "raster": { "mode": "source", "bandIds": [0], "stretchType": "min-max", "gamma": 1, "numberOfStandardDeviations": 2, "minPercent": 2, "maxPercent": 2, "colorStops": [{ "value": -1, "color": "#b91c1c" }, { "value": 0, "color": "#facc15" }, { "value": 1, "color": "#15803d" }], "useStatistics": true },
+        "interaction": { "popupOnClick": true, "selectable": true, "highlight": true, "zoomToSelection": true, "filterBySelection": false, "downloadAttributes": true }
+    }
+}
