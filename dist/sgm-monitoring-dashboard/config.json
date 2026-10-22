@@ -7,5 +7,6 @@
     },
     "logoLink": "",
     "gisApiUrl": "https://unproblematic-revisionary-shaunte.ngrok-free.dev",
-    "userGroups": []
+    "userGroups": [],
+    "gisUserGroups": []
 }
