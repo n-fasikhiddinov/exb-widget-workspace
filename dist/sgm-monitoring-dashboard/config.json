@@ -1,0 +1,11 @@
+{
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "fullAccessUsers": [],
+        "rules": [],
+        "fieldJoinOperator": "and"
+    },
+    "logoLink": "",
+    "gisApiUrl": "https://unproblematic-revisionary-shaunte.ngrok-free.dev",
+    "userGroups": []
+}
