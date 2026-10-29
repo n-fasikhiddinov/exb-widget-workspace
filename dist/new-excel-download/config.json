@@ -42,5 +42,6 @@
         "fieldJoinOperator": "and"
     },
     "includeGeometry": false,
-    "geometryColumnName": "geometry"
+    "geometryColumnName": "geometry",
+    "settingsLanguage": "ru"
 }
