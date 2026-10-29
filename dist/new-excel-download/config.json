@@ -1,0 +1,46 @@
+{
+    "color": "#00ff37ff",
+    "buttonName": "Download",
+    "fileName": "Excel",
+    "fileFormat": "xlsx",
+    "exportMode": "detail",
+    "summaryConfig": {
+        "groupByFields": [],
+        "groupTitles": {},
+        "groupVisibility": {},
+        "groupDisplay": {},
+        "statistics": [
+            {
+                "id": "summary_count",
+                "field": "",
+                "statisticType": "count",
+                "title": "Количество",
+                "kind": "statistic",
+                "formula": "",
+                "use": true,
+                "display": {}
+            }
+        ],
+        "includeTotal": false,
+        "totalLabel": "ИТОГО",
+        "orderBy": "",
+        "orderDirection": "ASC"
+    },
+    "sheetTemplate": {
+        "enabled": false,
+        "cells": [],
+        "customVariables": {},
+        "freezeHeader": true,
+        "freezeColumnsThrough": "",
+        "hideHeaders": false
+    },
+    "fields": [],
+    "accessConfig": {
+        "fullAccessGroups": [],
+        "fullAccessUsers": [],
+        "rules": [],
+        "fieldJoinOperator": "and"
+    },
+    "includeGeometry": false,
+    "geometryColumnName": "geometry"
+}
