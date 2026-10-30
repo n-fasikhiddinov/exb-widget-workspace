@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "authority",
+  "label": "Authority",
+  "type": "widget",
+  "icon": "icon.svg",
+  "description": "Единый портал: начальная страница, STT, рыбные пруды и посевы с общими настройками доступа",
+  "version": "2.0.25",
+  "author": "Fasihitdinov Niyoziddin",
+  "exbVersion": "1.18.0",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "defaultSize": {
+    "width": 1200,
+    "height": 800
+  },
+  "properties": {
+    "supportAutoSize": false,
+    "supportRepeat": false,
+    "showDescription": true,
+    "hasSettingPage": true
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ]
+}

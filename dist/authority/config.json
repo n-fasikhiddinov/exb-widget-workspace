@@ -1,0 +1,11 @@
+{
+  "accessConfig": {
+    "fullAccessGroups": [],
+    "fullAccessUsers": [],
+    "rules": [],
+    "fieldJoinOperator": "and"
+  },
+  "mapScale": 0.94,
+  "designVariant": "original",
+  "sectionStyleMode": "original"
+}
