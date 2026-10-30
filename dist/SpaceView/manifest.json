@@ -5,7 +5,7 @@
   "type": "widget",
   "icon": "icon.svg",
   "description": "SpaceView: raster and mosaic viewing, spectral analysis, comparison and DEM",
-  "version": "2.2.9",
+  "version": "2.2.10",
   "author": "Neon Dream",
   "exbVersion": "1.18.0",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
