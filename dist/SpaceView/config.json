@@ -1,4 +1,6 @@
 {
   "rasters": [],
-  "demUrl": "https://sgm.uzspace.uz/image/rest/services/AdminRaster/republic_DEM/ImageServer"
+  "demUrl": "https://sgm.uzspace.uz/image/rest/services/AdminRaster/republic_DEM/ImageServer",
+  "topLayerUrl": "",
+  "topLayerScale": 50000
 }
