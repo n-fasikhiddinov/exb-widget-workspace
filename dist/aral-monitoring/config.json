@@ -1,8 +1,9 @@
 {
-    "accessConfig": {
-        "fullAccessGroups": [],
-        "fullAccessUsers": [],
-        "rules": [],
-        "fieldJoinOperator": "and"
-    }
+  "accessConfig": {
+    "fullAccessGroups": [],
+    "fullAccessUsers": [],
+    "rules": [],
+    "fieldJoinOperator": "and"
+  },
+  "ssoLogoutUrl": ""
 }

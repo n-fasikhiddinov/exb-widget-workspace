@@ -7,5 +7,6 @@
   },
   "mapScale": 0.94,
   "designVariant": "original",
-  "sectionStyleMode": "original"
+  "sectionStyleMode": "original",
+  "ssoLogoutUrl": ""
 }
