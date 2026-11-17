@@ -1,15 +1,16 @@
 {
-    "accessConfig": {
-        "fullAccessGroups": [],
-        "fullAccessUsers": [],
-        "rules": [],
-        "fieldJoinOperator": "and",
-        "popupFieldAccess": {
-            "enabled": false,
-            "inverted": false,
-            "fields": [],
-            "groups": [],
-            "users": []
-        }
+  "accessConfig": {
+    "fullAccessGroups": [],
+    "fullAccessUsers": [],
+    "rules": [],
+    "fieldJoinOperator": "and",
+    "popupFieldAccess": {
+      "enabled": false,
+      "inverted": false,
+      "fields": [],
+      "groups": [],
+      "users": []
     }
+  },
+  "ssoLogoutUrl": ""
 }
