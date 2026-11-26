@@ -7,6 +7,6 @@
   },
   "mapScale": 0.94,
   "designVariant": "original",
-  "sectionStyleMode": "original",
+  "rasterByRegion": true,
   "ssoLogoutUrl": ""
 }
